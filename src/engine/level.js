@@ -236,10 +236,10 @@ function buildGraffiti(scene, map) {
     // Set flipU=true for any direction where the plane's local-right ends up antiparallel
     // to the player's screen-right, which flips the text.
     const DIRS = [
-        { dr: -1, dc:  0, getPx: (c) => c + 0.5,      getPz: (r) => r - 0.02,      rotY: 0,            flipU: false }, // N
-        { dr:  1, dc:  0, getPx: (c) => c + 0.5,      getPz: (r) => r + 1.02,      rotY: Math.PI,      flipU: true  }, // S — rotY=π flips local-right → mirrored
-        { dr:  0, dc: -1, getPx: (c) => c - 0.02,     getPz: (r) => r + 0.5,       rotY: -Math.PI / 2, flipU: true  }, // W — local-right points +Z, player-right is -Z → mirrored
-        { dr:  0, dc:  1, getPx: (c) => c + 1.02,     getPz: (r) => r + 0.5,       rotY:  Math.PI / 2, flipU: false }, // E — local-right points -Z, player-right is -Z → ok
+        { dr: -1, dc:  0, getPx: (c) => c + 0.5,  getPz: (r) => r - 0.02,  rotY: 0,            flipU: false }, // N
+        { dr:  1, dc:  0, getPx: (c) => c + 0.5,  getPz: (r) => r + 1.02,  rotY: Math.PI,      flipU: false }, // S
+        { dr:  0, dc: -1, getPx: (c) => c - 0.02, getPz: (r) => r + 0.5,   rotY: -Math.PI / 2, flipU: false }, // W
+        { dr:  0, dc:  1, getPx: (c) => c + 1.02, getPz: (r) => r + 0.5,   rotY:  Math.PI / 2, flipU: false }, // E
     ];
 
     // Collect all valid exposed wall faces
