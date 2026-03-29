@@ -222,6 +222,16 @@ function makeGraffitiTexture(scene, idx, lines, color, flip) {
     return dt;
 }
 
+// Exported for unit tests — describes graffiti placement for each wall face direction.
+// dr/dc: offset to open-space neighbor cell. rotY: plane rotation in Babylon.
+// flipU: whether to mirror the canvas horizontally to compensate for UV axis reversal.
+export const GRAFFITI_DIRS = [
+    { dr: -1, dc:  0, rotY: 0,            flipU: false, label: 'N' },
+    { dr:  1, dc:  0, rotY: Math.PI,      flipU: false, label: 'S' },
+    { dr:  0, dc: -1, rotY: -Math.PI / 2, flipU: true,  label: 'W' },
+    { dr:  0, dc:  1, rotY:  Math.PI / 2, flipU: false, label: 'E' },
+];
+
 // Scan the map, collect exposed wall faces, randomly place graffiti on them.
 // Rotation conventions (Babylon CreatePlane default normal = -Z):
 //   North face (visible from -Z side): rotY = 0
@@ -232,13 +242,13 @@ function buildGraffiti(scene, map) {
     const rows = map.length;
     const cols = map[0].length;
 
-    // flipU: rotating a plane ±180° or ±90° around Y can mirror the texture's U axis.
-    // Set flipU=true for any direction where the plane's local-right ends up antiparallel
-    // to the player's screen-right, which flips the text.
+    // flipU: Babylon left-handed rotation means ±90° rotations produce mirrored UV axes
+    // for opposite directions. East (rotY=+π/2) renders text correctly without flip;
+    // West (rotY=-π/2) is the mirror rotation so its text is reversed — needs flipU=true.
     const DIRS = [
         { dr: -1, dc:  0, getPx: (c) => c + 0.5,  getPz: (r) => r - 0.02,  rotY: 0,            flipU: false }, // N
         { dr:  1, dc:  0, getPx: (c) => c + 0.5,  getPz: (r) => r + 1.02,  rotY: Math.PI,      flipU: false }, // S
-        { dr:  0, dc: -1, getPx: (c) => c - 0.02, getPz: (r) => r + 0.5,   rotY: -Math.PI / 2, flipU: false }, // W
+        { dr:  0, dc: -1, getPx: (c) => c - 0.02, getPz: (r) => r + 0.5,   rotY: -Math.PI / 2, flipU: true  }, // W — mirror of E, needs flip
         { dr:  0, dc:  1, getPx: (c) => c + 1.02, getPz: (r) => r + 0.5,   rotY:  Math.PI / 2, flipU: false }, // E
     ];
 

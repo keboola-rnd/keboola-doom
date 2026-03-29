@@ -105,10 +105,14 @@ describe('buildGraffiti DIRS array', () => {
         expect(DIRS.length).toBe(4);
     });
 
-    it('all DIRS entries have flipU: false (critical — no mirroring via flipU)', () => {
-        for (let i = 0; i < DIRS.length; i++) {
-            expect(DIRS[i].flipU, `DIRS[${i}].flipU should be false`).toBe(false);
-        }
+    it('only West (rotY=-π/2) has flipU: true — mirror rotation of East requires canvas flip', () => {
+        // North (rotY=0) and South (rotY=π): no UV axis reversal → no flip
+        expect(DIRS[0].flipU).toBe(false); // N
+        expect(DIRS[1].flipU).toBe(false); // S
+        // East (rotY=+π/2): UV axis correct → no flip
+        expect(DIRS[3].flipU).toBe(false); // E
+        // West (rotY=-π/2): mirror of East rotation → UV axis reversed → needs flip
+        expect(DIRS[2].flipU).toBe(true);  // W
     });
 
     it('DIRS[0] (North) has rotY: 0', () => {
