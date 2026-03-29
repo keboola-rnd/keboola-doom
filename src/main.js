@@ -144,6 +144,7 @@ class Game {
         for (const mesh of this._scene.meshes.slice()) {
             if (mesh.name.startsWith('wall_')     ||
                 mesh.name.startsWith('graffiti_') ||
+                mesh.name.startsWith('chart_')    ||
                 levelMeshNames.includes(mesh.name)) {
                 mesh.dispose();
             }

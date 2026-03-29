@@ -26,6 +26,9 @@ export function createScene(canvas) {
     const glow = new BABYLON.GlowLayer('glow', scene);
     glow.intensity = 0.35;
 
+    // Store on scene so other systems can exclude meshes without extra plumbing
+    scene.metadata = { glow };
+
     // Ensure canvas matches CSS size on init and on window resize
     engine.resize();
     window.addEventListener('resize', () => engine.resize());
