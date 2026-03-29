@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KEBOOLA DOOM</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body {
+            width: 100%; height: 100%;
+            background: #000;
+            overflow: hidden;
+            font-family: 'Courier New', monospace;
+        }
+        #renderCanvas {
+            width: 100%; height: 100%;
+            display: block;
+            touch-action: none;
+            outline: none;
+        }
+        #hud-canvas {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            pointer-events: none;
+            z-index: 2;
+        }
+        #overlay {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0,0,0,0.92);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: #ff2200;
+            text-align: center;
+            z-index: 10;
+        }
+        #overlay h1 {
+            font-size: 3.5rem;
+            letter-spacing: 10px;
+            margin-bottom: 0.5rem;
+            text-shadow: 0 0 30px #ff2200, 0 0 60px #ff4400;
+        }
+        #overlay .tagline {
+            color: #4499ff;
+            font-size: 1rem;
+            letter-spacing: 4px;
+            margin-bottom: 2.5rem;
+        }
+        #overlay .controls {
+            color: #888;
+            font-size: 0.85rem;
+            line-height: 2;
+            margin-bottom: 2.5rem;
+            border: 1px solid #333;
+            padding: 1rem 2rem;
+        }
+        #overlay .controls span { color: #ccc; }
+        .diff-label {
+            color: #666;
+            font-size: 0.8rem;
+            letter-spacing: 4px;
+            margin-bottom: 0.8rem;
+        }
+        .diff-btns {
+            display: flex;
+            gap: 1rem;
+        }
+        .diff-btn {
+            padding: 12px 24px;
+            background: transparent;
+            border: 2px solid currentColor;
+            font-family: 'Courier New', monospace;
+            font-size: 0.75rem;
+            letter-spacing: 3px;
+            cursor: pointer;
+            text-transform: uppercase;
+            transition: all 0.2s;
+            text-align: center;
+            line-height: 1.6;
+        }
+        .diff-btn small {
+            display: block;
+            font-size: 0.6rem;
+            letter-spacing: 1px;
+            opacity: 0.7;
+            margin-top: 2px;
+        }
+        #btn-easy   { color: #44cc44; }
+        #btn-medium { color: #ffaa00; }
+        #btn-hard   { color: #ff2200; }
+        #btn-easy:hover   { background: #44cc44; color: #000; box-shadow: 0 0 20px #44cc44; }
+        #btn-medium:hover { background: #ffaa00; color: #000; box-shadow: 0 0 20px #ffaa00; }
+        #btn-hard:hover   { background: #ff2200; color: #000; box-shadow: 0 0 20px #ff2200; }
+        #overlay.hidden { display: none; }
+        #death-screen, #win-screen {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            font-family: 'Courier New', monospace;
+            z-index: 10;
+            display: none;
+        }
+        #death-screen { background: rgba(100,0,0,0.85); color: #ff0000; }
+        #death-screen h2 {
+            font-size: 4rem;
+            letter-spacing: 8px;
+            text-shadow: 0 0 20px #ff0000;
+        }
+        #win-screen { background: rgba(0,30,60,0.9); color: #44aaff; }
+        #win-screen h2 {
+            font-size: 3rem;
+            letter-spacing: 6px;
+            text-shadow: 0 0 20px #44aaff;
+        }
+        .screen-score {
+            font-size: 1.5rem;
+            margin: 1rem 0;
+            color: #fff;
+        }
+        .screen-btn {
+            margin-top: 1.5rem;
+            padding: 10px 40px;
+            background: transparent;
+            border: 2px solid currentColor;
+            color: inherit;
+            font-size: 1rem;
+            font-family: 'Courier New', monospace;
+            letter-spacing: 4px;
+            cursor: pointer;
+        }
+        .screen-btn:hover { opacity: 0.7; }
+        #pause-screen {
+            position: fixed;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0,0,0,0.8);
+            color: #fff;
+            font-family: 'Courier New', monospace;
+            padding: 2rem 3rem;
+            text-align: center;
+            border: 1px solid #555;
+            z-index: 10;
+            display: none;
+        }
+        #pause-screen h3 {
+            font-size: 1.5rem;
+            letter-spacing: 6px;
+            margin-bottom: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="renderCanvas"></canvas>
+    <canvas id="hud-canvas"></canvas>
+
+    <div id="overlay">
+        <h1>KEBOOLA DOOM</h1>
+        <p class="tagline">WHEN YOUR PIPELINES START FIGHTING BACK</p>
+        <div class="controls">
+            <span>Arrow Up/Down</span> — Move &nbsp;&nbsp; <span>Arrow Left/Right</span> — Turn<br>
+            <span>Space</span> — Execute Query &nbsp;&nbsp; <span>1-5</span> — Switch Component<br>
+            <span>Scroll</span> — Cycle Components &nbsp;&nbsp; <span>Tab</span> — Toggle Minimap<br>
+            <span>ESC</span> — Pause Pipeline
+        </div>
+        <p class="diff-label">SELECT DIFFICULTY</p>
+        <div class="diff-btns">
+            <button class="diff-btn" id="btn-easy">
+                JUNIOR ANALYST
+                <small>read-only access<br>60% enemy damage</small>
+            </button>
+            <button class="diff-btn" id="btn-medium">
+                ANALYTICS ENGINEER
+                <small>owns 3 dashboards, 2 broken<br>100% enemy damage</small>
+            </button>
+            <button class="diff-btn" id="btn-hard">
+                DATA ENGINEER
+                <small>root on prod at 3am<br>140% enemy damage</small>
+            </button>
+        </div>
+    </div>
+
+    <div id="death-screen">
+        <h2>JOB FAILED</h2>
+        <p style="color:#aaa;font-size:1rem;margin:0.5rem 0" id="death-msg">Pipeline error: Player.exe crashed with exit code -1</p>
+        <div class="screen-score" id="death-score"></div>
+        <button class="screen-btn" id="retry-btn">RETRY JOB</button>
+    </div>
+
+    <div id="win-screen">
+        <h2>ALL JOBS GREEN</h2>
+        <p style="color:#aaa;font-size:1rem;margin:0.5rem 0">Enemies terminated. Data is clean. Now go fix the other 47 tickets.</p>
+        <div class="screen-score" id="win-score"></div>
+        <button class="screen-btn" id="win-retry-btn">RUN AGAIN</button>
+    </div>
+
+    <div id="cheat-msg" style="
+        position: fixed; top: 42%; left: 50%;
+        transform: translate(-50%, -50%);
+        background: rgba(0,0,0,0.9);
+        color: #ffff00;
+        font-family: 'Courier New', monospace;
+        font-size: 1rem;
+        letter-spacing: 2px;
+        padding: 0.7rem 1.8rem;
+        border: 2px solid #ffff00;
+        box-shadow: 0 0 20px #ffff00;
+        display: none;
+        z-index: 15;
+        text-align: center;
+        max-width: 600px;
+    "></div>
+
+    <div id="pause-screen">
+        <h3>PIPELINE PAUSED</h3>
+        <p style="color:#888;font-size:0.85rem">Click game to resume / ESC to release pointer lock</p>
+    </div>
+
+    <script src="https://cdn.babylonjs.com/babylon.js"></script>
+    <script src="https://cdn.babylonjs.com/gui/babylon.gui.min.js"></script>
+    <script type="module" src="src/main.js"></script>
+</body>
+</html>
