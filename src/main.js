@@ -238,7 +238,7 @@ class Game {
 
     _cheatAllWeapons() {
         const p = this._player;
-        ['sql_gun', 'data_shotgun', 'pipeline_launcher', 'bfd_9000', 'kai_assistant']
+        ['sql_gun', 'data_shotgun', 'pipeline_launcher', 'bfd_9000', 'kai_assistant', 'drop_all_tables']
             .forEach(w => p.giveWeapon(w));
         p.armor = 100;
         Object.keys(p.ammo).forEach(k => { p.ammo[k] = MAX_AMMO[k] ?? 0; });
@@ -257,7 +257,8 @@ class Game {
         const killsLeft = this._entityManager
             ? this._entityManager.enemies.filter(e => e.isAlive()).length
             : 0;
-        this._hud.draw(this._hudCtx, this._player, this._weaponSystem, this._score, killsLeft);
+        const enemies = this._entityManager ? this._entityManager.enemies : [];
+        this._hud.draw(this._hudCtx, this._player, this._weaponSystem, this._score, killsLeft, enemies);
     }
 }
 

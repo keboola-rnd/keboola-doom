@@ -32,8 +32,8 @@ const C = {
 };
 
 // Weapon order for arms grid (skip fist=1)
-const ARMS_ORDER  = ['sql_gun', 'data_shotgun', 'pipeline_launcher', 'bfd_9000', 'kai_assistant'];
-const ARMS_LABELS = ['2', '3', '4', '5', '6'];
+const ARMS_ORDER  = ['sql_gun', 'data_shotgun', 'pipeline_launcher', 'bfd_9000', 'kai_assistant', 'drop_all_tables'];
+const ARMS_LABELS = ['2', '3', '4', '5', '6', '7'];
 
 const AMMO_ROWS = [
     { key: 'bullets', label: 'SQLS' },   // SQL queries
@@ -41,6 +41,7 @@ const AMMO_ROWS = [
     { key: 'rockets', label: 'BTCH' },   // batch jobs
     { key: 'energy',  label: 'CRDT' },   // Snowflake credits
     { key: 'tokens',  label: 'TOKN' },   // KAI LLM tokens
+    { key: 'ddl',     label: 'DDL ' },   // DROP ALL TABLES operations
 ];
 
 export class HUD {
@@ -59,7 +60,7 @@ export class HUD {
     notifyKill()   { this._faceRage  = 800; }
     notifyHurt()   { this._faceOuch  = 400; }
 
-    draw(ctx, player, weaponSystem, score, killsLeft) {
+    draw(ctx, player, weaponSystem, score, killsLeft, enemies) {
         const W = ctx.canvas.width;
         const H = ctx.canvas.height;
         ctx.clearRect(0, 0, W, H);
@@ -70,7 +71,7 @@ export class HUD {
         this._drawWeaponSprite(ctx, player, weaponSystem, W, H);
         this._drawBar(ctx, player, weaponSystem, score, killsLeft, W, H);
         this._drawScore(ctx, score, killsLeft, W);
-        if (this._showMinimap)       this._drawMinimap(ctx, player);
+        if (this._showMinimap)       this._drawMinimap(ctx, player, enemies);
     }
 
     // ── Full status bar ───────────────────────────────────────────────────────
@@ -686,7 +687,7 @@ export class HUD {
 
     // ── Minimap ───────────────────────────────────────────────────────────────
 
-    _drawMinimap(ctx, player) {
+    _drawMinimap(ctx, player, enemies = []) {
         const map = player._map;
         if (!map) return;
         const cols = map[0].length;
@@ -721,6 +722,40 @@ export class HUD {
         ctx.moveTo(px, py);
         ctx.lineTo(px + player.dirX * cs * 2.5, py + player.dirY * cs * 2.5);
         ctx.stroke();
+
+        // Enemy dots — colored by type, with short type label
+        const ENEMY_COLORS = {
+            data_zombie:    '#ff4444',
+            pipeline_demon: '#ff8800',
+            config_monster: '#ffdd00',
+            server_boss:    '#ff44ff',
+            flow_specter:   '#44ffff',
+            sql_mutant:     '#44ff44',
+        };
+        const ENEMY_LABELS = {
+            data_zombie:    'Z',
+            pipeline_demon: 'D',
+            config_monster: 'M',
+            server_boss:    'B',
+            flow_specter:   'F',
+            sql_mutant:     'S',
+        };
+        for (const enemy of enemies) {
+            if (!enemy.isAlive()) continue;
+            const ex = mx + enemy.x * cs;
+            const ey = my + enemy.y * cs;
+            const col = ENEMY_COLORS[enemy.kind] ?? '#ffffff';
+            ctx.fillStyle = col;
+            const r = enemy.kind === 'server_boss' ? cs * 0.9 : cs * 0.6;
+            ctx.beginPath();
+            ctx.arc(ex, ey, r, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = '#000000';
+            ctx.font = `bold ${Math.round(r * 1.4)}px monospace`;
+            ctx.textAlign = 'center';
+            ctx.fillText(ENEMY_LABELS[enemy.kind] ?? '?', ex, ey + r * 0.45);
+        }
+        ctx.textAlign = 'left';
     }
 
     // ── Score overlay (top center, classic Doom intermission style) ──────────

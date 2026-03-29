@@ -1047,6 +1047,14 @@ export class EntityManager {
     getMap() { return this._map; }
 
     firePlayerWeapon(player, def) {
+        if (def.dropAll) {
+            for (const enemy of this.enemies) {
+                if (!enemy.isAlive()) continue;
+                enemy.takeDamage(def.damage, this._audio);
+                if (!enemy.isAlive()) this._scoreQueue += enemy.score;
+            }
+            return;
+        }
         if (def.melee)     { this._meleeFire(player, def);   return; }
         if (def.pellets)   { this._shotgunFire(player, def); return; }
         if (def.projectile) {

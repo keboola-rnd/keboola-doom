@@ -35,6 +35,7 @@ export const MAX_AMMO = {
     rockets: 50,
     energy: 200,
     tokens: 999999,   // KAI token budget — effectively unlimited
+    ddl: 3,
 };
 
 export const STARTING_AMMO = {
@@ -43,6 +44,7 @@ export const STARTING_AMMO = {
     rockets: 0,
     energy: 0,
     tokens: 0,        // only available via idkfa cheat
+    ddl: 1,
 };
 
 // Minimap
@@ -131,6 +133,17 @@ export const WEAPON_DEFS = {
         projSpeed: 0.07,          // very slow orb — "generating response..."
         projSprite: 17,
         color: '#ff44ff',
+    },
+    drop_all_tables: {
+        id: 'drop_all_tables',
+        name: 'DROP ALL TABLES',     // instant schema destruction — no confirmation dialog
+        damage: 99999,
+        fireRate: 5000,
+        ammoType: 'ddl',
+        ammoPerShot: 1,
+        melee: false,
+        dropAll: true,               // special flag — kills all alive enemies instantly
+        color: '#ff2200',
     },
 };
 
