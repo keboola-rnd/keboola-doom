@@ -119,6 +119,27 @@ const GRAFFITI = [
     { lines: ['data quality:', 'aspiratioal'],            color: '#ff6666' }, // typo is the joke
     { lines: ['DO NOT', 'DELETE', '(please)'],            color: '#ff0000' },
     { lines: ['SELECT *', 'FROM prod', 'WHERE 1=1'],      color: '#ff3333' },
+    // More memes
+    { lines: ['it depends', 'on use case'],                color: '#ff9900' },
+    { lines: ['WHERE 1=0', 'is valid SQL'],                color: '#00ccff' },
+    { lines: ['just use', 'FULL OUTER JOIN'],              color: '#ff44aa' },
+    { lines: ['the data', 'is correct', 'trust me'],       color: '#44ffaa' },
+    { lines: ['TRUNCATE', 'then cry'],                     color: '#ff2200' },
+    { lines: ['this pipeline', 'is idempotent', '(maybe)'],color: '#ccff44' },
+    { lines: ['schema', 'on write', '(never)'],            color: '#ff88cc' },
+    { lines: ['event-driven', 'batch'],                    color: '#55aaff' },
+    { lines: ['our dbt models', 'are fine'],               color: '#ff7700' },
+    { lines: ['COALESCE', 'everything'],                   color: '#aaff55' },
+    { lines: ['normalization', 'is for cowards'],          color: '#ff3388' },
+    { lines: ['one source', 'of truth', '(we have 7)'],   color: '#ffdd00' },
+    { lines: ['the JOIN', 'was fine', 'yesterday'],        color: '#ff5533' },
+    { lines: ['CAST(pain', 'AS float)'],                   color: '#cc88ff' },
+    { lines: ['data lake', 'data swamp'],                  color: '#3388ff' },
+    { lines: ['real-time', 'next quarter'],                color: '#ff4422' },
+    { lines: ['monitoring?', 'we have', 'Slack alerts'],   color: '#ffaa22' },
+    { lines: ['no docs', 'only vibes'],                    color: '#ff66bb' },
+    { lines: ['column', '"new_final2"'],                   color: '#aaffdd' },
+    { lines: ['it ran in', '0ms', '(it failed)'],          color: '#ff3300' },
     // Actual Keboola / data warehouse error messages
     { lines: ['Query exceeded', '70% of', 'warehouse memory'],  color: '#ff4400' },
     { lines: ['Circular DAG', 'detected'],                       color: '#ff00aa' },
@@ -128,6 +149,13 @@ const GRAFFITI = [
     { lines: ['String too long', 'for VARCHAR(255)'],            color: '#ffcc44' },
     { lines: ['timestamp', 'without timezone'],                  color: '#ffaa44' },
     { lines: ['Execution time', 'exceeded limit'],               color: '#ff6600' },
+    { lines: ['Duplicate key', 'violates', 'unique constraint'], color: '#ff1144' },
+    { lines: ['division by zero', 'in prod'],                    color: '#ff2200' },
+    { lines: ['out of memory', 'on row 2'],                      color: '#ff0055' },
+    { lines: ['column count', 'does not match', 'value count'],  color: '#ff3300' },
+    { lines: ['permission denied', 'for table prod'],            color: '#ff4411' },
+    { lines: ['could not serialize', 'access due to', 'concurrent update'], color: '#ff0033' },
+    { lines: ['NaN propagated', 'through 47', 'transformations'],color: '#ffaa00' },
 ];
 
 // Shuffle array in-place (Fisher–Yates)
