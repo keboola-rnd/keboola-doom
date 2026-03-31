@@ -426,7 +426,7 @@ export const ITEM_TYPES = {
     armor:        { id: 'armor',        name: 'SLA Guarantee',     armor: 25, spriteIndex: 9 },   // 99.9% uptime, guaranteed
     weapon_shotgun:       { id: 'weapon_shotgun',       name: 'Parallel Jobs',    weaponId: 'data_shotgun',      ammoType: 'shells',  ammoBonus: 10, spriteIndex: 10 },
     weapon_launcher:      { id: 'weapon_launcher',      name: 'ETL Bazooka',      weaponId: 'pipeline_launcher', ammoType: 'rockets', ammoBonus: 5,  spriteIndex: 11 },
-    weapon_kai:           { id: 'weapon_kai',           name: 'KAI Assistant',    weaponId: 'kai_assistant',     ammoType: 'tokens',  ammoBonus: 10, spriteIndex: 12 },
+    weapon_kai:           { id: 'weapon_kai',           name: 'KAI Assistant',    weaponId: 'kai_assistant',     ammoType: 'tokens',  ammoBonus: 3000, spriteIndex: 12 },
     weapon_chainsaw:      { id: 'weapon_chainsaw',      name: 'Kill Job',         weaponId: 'chainsaw',          ammoType: null,      ammoBonus: 0,  spriteIndex: 18 },
     weapon_super_shotgun: { id: 'weapon_super_shotgun', name: 'Conditional Flow', weaponId: 'super_shotgun',     ammoType: 'shells',  ammoBonus: 4,  spriteIndex: 19 },
     weapon_chaingun:      { id: 'weapon_chaingun',      name: 'Webhook',          weaponId: 'chaingun',          ammoType: 'bullets', ammoBonus: 40, spriteIndex: 20 },
