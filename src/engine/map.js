@@ -66,6 +66,10 @@ const SPAWNS_L0 = [
     { type: 'item',  kind: 'weapon_super_shotgun', x: 15.5, y: 10.5 },
     { type: 'item',  kind: 'weapon_chaingun', x: 16.5, y: 17.5 },
     { type: 'item',  kind: 'ammo_energy',     x: 8.5,  y: 17.5 },
+    { type: 'item',  kind: 'weapon_chaingun', x: 4.5,  y: 4.5 },
+    { type: 'item',  kind: 'armor',           x: 14.5, y: 2.5 },
+    { type: 'item',  kind: 'armor',           x: 4.5,  y: 11.5 },
+    { type: 'item',  kind: 'armor',           x: 15.5, y: 17.5 },
 ];
 
 // ─── L1: Trigger Flow ─────────────────────────────────────────────────────────
