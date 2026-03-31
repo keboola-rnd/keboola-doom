@@ -362,6 +362,7 @@ class Game {
             used_cheats:        this._usedCheats,
             completed,
             difficulty:         this._difficulty,
+            kill_score:         this._totalScore + this._score,
         };
         try {
             const res = await fetch(`/api/sessions/${this._sessionId}`, {

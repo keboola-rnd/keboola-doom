@@ -20,11 +20,11 @@ try {
     }
 } catch (e) { /* .env not required in prod */ }
 
-if (!process.env.connection_string) {
-    throw new Error('Missing required environment variable: connection_string');
+if (!process.env.CONNECTION_STRING) {
+    throw new Error('Missing required environment variable: CONNECTION_STRING');
 }
 
-const pool = new pg.Pool({ connectionString: process.env.connection_string });
+const pool = new pg.Pool({ connectionString: process.env.CONNECTION_STRING });
 
 async function initDb() {
     await pool.query(`
@@ -38,6 +38,9 @@ async function initDb() {
 
             -- Difficulty: 0=easy (JR), 1=medium (AE), 2=hard (DE)
             difficulty         SMALLINT NOT NULL DEFAULT 1,
+
+            -- In-game kill score accumulated across all missions
+            kill_score         INTEGER NOT NULL DEFAULT 0,
 
             -- Player fingerprint fields for identifying same player across nicks
             ip_address         TEXT,
@@ -66,7 +69,8 @@ async function initDb() {
             ADD COLUMN IF NOT EXISTS hw_concurrency SMALLINT,
             ADD COLUMN IF NOT EXISTS device_memory  REAL,
             ADD COLUMN IF NOT EXISTS color_depth    SMALLINT,
-            ADD COLUMN IF NOT EXISTS fingerprint    TEXT
+            ADD COLUMN IF NOT EXISTS fingerprint    TEXT,
+            ADD COLUMN IF NOT EXISTS kill_score     INTEGER NOT NULL DEFAULT 0
     `);
 }
 
@@ -126,7 +130,7 @@ app.patch('/api/sessions/:id', async (req, res) => {
     const id = parseInt(req.params.id, 10);
     if (!Number.isFinite(id)) return res.status(400).json({ error: 'invalid id' });
 
-    const { level_reached, total_time_seconds, used_cheats, completed, difficulty } = req.body ?? {};
+    const { level_reached, total_time_seconds, used_cheats, completed, difficulty, kill_score } = req.body ?? {};
     try {
         await pool.query(
             `UPDATE sessions
@@ -135,14 +139,16 @@ app.patch('/api/sessions/:id', async (req, res) => {
                  used_cheats        = $3,
                  completed          = $4,
                  difficulty         = $5,
+                 kill_score         = $6,
                  updated_at         = NOW()
-             WHERE id = $6`,
+             WHERE id = $7`,
             [
                 Math.max(0, Math.floor(level_reached ?? 0)),
                 Math.max(0, Math.floor(total_time_seconds ?? 0)),
                 Boolean(used_cheats),
                 Boolean(completed),
                 [0, 1, 2].includes(difficulty) ? difficulty : 1,
+                Math.max(0, Math.floor(kill_score ?? 0)),
                 id,
             ]
         );
@@ -154,7 +160,7 @@ app.patch('/api/sessions/:id', async (req, res) => {
 });
 
 // Score formula (computed in SQL):
-//   base     = level_reached * 10000
+//   base     = kill_score (in-game kills accumulated across all missions)
 //   time_bon = GREATEST(0, 3600 - total_time_seconds)   -- up to 3600 pts for speed
 //   complete = 15000 if completed
 //   diff_mul = 1.0 / 1.5 / 2.0  for JR / AE / DE
@@ -165,7 +171,7 @@ app.patch('/api/sessions/:id', async (req, res) => {
 const SCORE_SQL = `
     ROUND(
         (
-            level_reached * 10000
+            kill_score
             + GREATEST(0, 3600 - total_time_seconds)
             + CASE WHEN completed THEN 15000 ELSE 0 END
         )
