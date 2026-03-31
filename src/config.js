@@ -293,8 +293,6 @@ export const ENEMY_TYPES = {
         isBoss: true,
         projSpeed: 0.25,
         projSplash: 0,
-        bossAbility: 'spawn_duplicates',
-        bossReviveCooldown: 8000,
     },
     trigger_boss: {
         id: 'trigger_boss',
