@@ -1,6 +1,6 @@
 // Entity system — Enemies, Items, Projectiles + EntityManager
 
-import { ENEMY_TYPES, ITEM_TYPES, WEAPON_DEFS } from '../config.js';
+import { ENEMY_TYPES, ITEM_TYPES, WEAPON_DEFS, L2_DATA_TYPES, L2_COLUMN_DEFS, L2_RECORDS_BY_DIFFICULTY, L2_RECORD_SPEED, L2_SPAWN_INTERVALS, L2_MAX_CONCURRENT, L2_COLUMN_HIT_R2, L2_CAST_HIT_R2 } from '../config.js';
 import { isWall, hasLineOfSight } from '../engine/map.js';
 
 // ─── Colors ───────────────────────────────────────────────────────────────────
@@ -20,6 +20,7 @@ const ENEMY_COLORS = {
     null_pointer:       [1.0, 0.0, 1.0],   // magenta
     aggregator_shard:   [0.1, 0.4, 0.9],   // medium blue
     urgent_ticket:      [0.0, 0.7, 1.0],   // Jira blue
+    trigger_boss:       [0.0, 1.0, 0.9],   // cyan/teal
 };
 
 const ITEM_COLORS = {
@@ -267,42 +268,24 @@ const AMMO_SHORT = { bullets: 'SQLS', shells: 'APIC', rockets: 'BTCH', energy: '
 
 // ─── Boss-specific sprite drawing functions ───────────────────────────────────
 
+// Preload the extractor icon so it's ready when the boss sprite is first drawn.
+// Guard against non-browser environments (e.g. Node.js test runner).
+const _extractorIcon = typeof Image !== 'undefined' ? new Image() : null;
+if (_extractorIcon) _extractorIcon.src = '/textures/boss_extractor.png';
+
 function _drawExtractorSprite(ctx, body, acc) {
-    // Two overlapping DB tables — represents data duplication
-    ctx.fillStyle = '#0a0a18';
-    ctx.fillRect(2, 4, 54, 56);
-    // Background table (offset)
-    ctx.fillStyle = body;
-    ctx.globalAlpha = 0.7;
-    ctx.fillRect(6, 8, 52, 12);
-    ctx.globalAlpha = 1.0;
-    ctx.strokeStyle = acc;
-    ctx.lineWidth = 1;
-    ctx.strokeRect(6, 8, 52, 50);
-    // Foreground table
-    ctx.fillStyle = body;
-    ctx.fillRect(2, 4, 52, 12);
-    ctx.strokeStyle = acc;
-    ctx.lineWidth = 1.5;
-    ctx.strokeRect(2, 4, 52, 50);
-    // Table rows with duplicate markers
-    ctx.fillStyle = '#ffffff';
-    ctx.font = 'bold 4px monospace';
-    ctx.textAlign = 'left';
-    for (let r = 0; r < 4; r++) {
-        const y = 20 + r * 9;
-        ctx.fillStyle = r % 2 === 0 ? '#0f0f20' : '#161628';
-        ctx.fillRect(3, y, 50, 8);
-        ctx.fillStyle = acc;
-        ctx.fillText(`COPY_${r+1}`, 5, y + 6);
-        // Duplicate badge
+    if (_extractorIcon && _extractorIcon.complete && _extractorIcon.naturalWidth > 0) {
+        // Draw the Keboola Generic Extractor icon centered in the 64×64 sprite area.
+        ctx.drawImage(_extractorIcon, 0, 4, 64, 56);
+    } else {
+        // Fallback while image is loading: simple placeholder
+        ctx.fillStyle = body;
+        ctx.fillRect(8, 8, 48, 48);
         ctx.fillStyle = '#ff4400';
-        ctx.fillText('DUP', 42, y + 6);
+        ctx.font = 'bold 5px monospace';
+        ctx.textAlign = 'center';
+        ctx.fillText('EXTRACTOR', 32, 58);
     }
-    ctx.fillStyle = '#ff4400';
-    ctx.font = 'bold 5px monospace';
-    ctx.textAlign = 'center';
-    ctx.fillText('EXTRACTOR', 32, 58);
 }
 
 function _drawValidatorSprite(ctx, body, acc, phase) {
@@ -420,34 +403,242 @@ function _drawAggregatorShardSprite(ctx, body, acc) {
 }
 
 function _drawStakeholderSprite(ctx, body, acc) {
-    // Presentation slide with urgent graph
-    ctx.fillStyle = '#1a1a2e';
-    ctx.fillRect(4, 4, 56, 48);
-    ctx.strokeStyle = acc;
-    ctx.lineWidth = 1.5;
-    ctx.strokeRect(4, 4, 56, 48);
-    // Slide header
-    ctx.fillStyle = body;
-    ctx.fillRect(4, 4, 56, 9);
-    ctx.fillStyle = '#000';
-    ctx.font = 'bold 4px monospace';
     ctx.textAlign = 'center';
-    ctx.fillText('Q4 REPORT', 32, 10);
-    // Bar chart going up dramatically
-    const bars = [8, 14, 20, 28, 38, 52];
-    bars.forEach((h, i) => {
-        ctx.fillStyle = i === bars.length - 1 ? '#ff4444' : '#4444aa';
-        ctx.fillRect(10 + i * 9, 52 - h, 7, h);
+
+    // ── Legs ─────────────────────────────────────────────────────────────────
+    // Left leg
+    ctx.fillStyle = '#111128';
+    ctx.fillRect(20, 46, 9, 14);
+    // Left shoe
+    ctx.fillStyle = '#080810';
+    ctx.fillRect(18, 57, 12, 5);
+    // Right leg
+    ctx.fillStyle = '#111128';
+    ctx.fillRect(35, 46, 9, 14);
+    // Right shoe
+    ctx.fillStyle = '#080810';
+    ctx.fillRect(34, 57, 12, 5);
+
+    // ── Torso / suit ─────────────────────────────────────────────────────────
+    ctx.fillStyle = '#1a1a3a';
+    ctx.fillRect(17, 26, 30, 22);
+    // Suit lapels
+    ctx.fillStyle = '#12122a';
+    ctx.beginPath(); ctx.moveTo(17, 26); ctx.lineTo(28, 34); ctx.lineTo(24, 48); ctx.lineTo(17, 48); ctx.closePath(); ctx.fill();
+    ctx.beginPath(); ctx.moveTo(47, 26); ctx.lineTo(36, 34); ctx.lineTo(40, 48); ctx.lineTo(47, 48); ctx.closePath(); ctx.fill();
+    // White shirt + collar
+    ctx.fillStyle = '#eeeeff';
+    ctx.beginPath(); ctx.moveTo(25, 26); ctx.lineTo(32, 33); ctx.lineTo(39, 26); ctx.closePath(); ctx.fill();
+    // Tie
+    ctx.fillStyle = acc;
+    ctx.beginPath();
+    ctx.moveTo(29, 28); ctx.lineTo(35, 28); ctx.lineTo(34, 44); ctx.lineTo(32, 47); ctx.lineTo(30, 44);
+    ctx.closePath(); ctx.fill();
+    // Suit buttons
+    ctx.fillStyle = '#8888aa';
+    [37, 41].forEach(y => {
+        ctx.beginPath(); ctx.arc(32, y, 1, 0, Math.PI * 2); ctx.fill();
     });
-    // Urgent label
-    ctx.fillStyle = '#ff4444';
+
+    // ── Arms ─────────────────────────────────────────────────────────────────
+    // Left arm (raised slightly — gesturing)
+    ctx.fillStyle = '#1a1a3a';
+    ctx.save();
+    ctx.translate(14, 30); ctx.rotate(0.4);
+    ctx.fillRect(-3, 0, 7, 16);
+    ctx.restore();
+    // Left hand
+    ctx.fillStyle = '#e8b89a';
+    ctx.beginPath(); ctx.ellipse(10, 44, 4, 3.5, 0.4, 0, Math.PI * 2); ctx.fill();
+
+    // Right arm (raised — holding a chart)
+    ctx.fillStyle = '#1a1a3a';
+    ctx.save();
+    ctx.translate(50, 30); ctx.rotate(-0.4);
+    ctx.fillRect(-4, 0, 7, 16);
+    ctx.restore();
+    // Right hand holding mini chart
+    ctx.fillStyle = '#e8b89a';
+    ctx.beginPath(); ctx.ellipse(54, 44, 4, 3.5, -0.4, 0, Math.PI * 2); ctx.fill();
+    // Mini chart in hand
+    ctx.fillStyle = '#ffdd00';
+    ctx.font = 'bold 5px monospace';
+    ctx.fillText('📈', 56, 38);
+
+    // ── Head ─────────────────────────────────────────────────────────────────
+    ctx.fillStyle = '#e8b89a';
+    ctx.beginPath(); ctx.ellipse(32, 16, 11, 13, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = '#c49070'; ctx.lineWidth = 0.8;
+    ctx.beginPath(); ctx.ellipse(32, 16, 11, 13, 0, 0, Math.PI * 2); ctx.stroke();
+    // Hair
+    ctx.fillStyle = '#2a1800';
+    ctx.beginPath(); ctx.ellipse(32, 5, 11, 5, 0, Math.PI, Math.PI * 2); ctx.fill();
+    ctx.fillRect(21, 5, 22, 5);
+    // Dollar-sign eyes
+    ctx.fillStyle = '#ffdd00';
+    ctx.font = 'bold 8px monospace';
+    ctx.fillText('$', 26, 18);
+    ctx.fillText('$', 38, 18);
+    // Smug grin
+    ctx.strokeStyle = '#7a3a1a'; ctx.lineWidth = 1.2; ctx.lineCap = 'round';
+    ctx.beginPath(); ctx.arc(32, 23, 5, 0.15, Math.PI - 0.15); ctx.stroke();
+}
+
+function _drawTriggerBossSprite(ctx, body, acc) {
+    // Keboola-style flow diagram: [TABLE] --on:update--> [TRIGGER] ---> [FLOW]
+    ctx.fillStyle = '#001a1a';
+    ctx.fillRect(2, 2, 60, 60);
+    ctx.strokeStyle = '#004444';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(2, 2, 60, 60);
+
+    // Left node — source table
+    ctx.fillStyle = '#002222';
+    ctx.fillRect(3, 22, 16, 12);
+    ctx.strokeStyle = acc;
+    ctx.lineWidth = 1;
+    ctx.strokeRect(3, 22, 16, 12);
+    ctx.fillStyle = body;
+    ctx.font = 'bold 3.5px monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText('TABLE', 11, 29);
+
+    // Arrow left -> center
+    ctx.strokeStyle = '#00ffff';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.moveTo(19, 28); ctx.lineTo(23, 28); ctx.stroke();
+    ctx.fillStyle = '#00ffff';
+    ctx.beginPath(); ctx.moveTo(23, 25); ctx.lineTo(27, 28); ctx.lineTo(23, 31); ctx.closePath(); ctx.fill();
+
+    // Center node — trigger (glowing, larger)
+    ctx.fillStyle = '#003333';
+    ctx.fillRect(27, 16, 18, 22);
+    ctx.strokeStyle = '#00ffff';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(27, 16, 18, 22);
+
+    // Lightning bolt (trigger symbol)
+    ctx.fillStyle = '#00ffff';
+    ctx.beginPath();
+    ctx.moveTo(38, 18); ctx.lineTo(33, 26); ctx.lineTo(36, 26);
+    ctx.lineTo(31, 36); ctx.lineTo(39, 25); ctx.lineTo(35, 25);
+    ctx.closePath(); ctx.fill();
+
+    // Arrow center -> right
+    ctx.strokeStyle = '#00ffff';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.moveTo(45, 27); ctx.lineTo(49, 27); ctx.stroke();
+    ctx.fillStyle = '#00ffff';
+    ctx.beginPath(); ctx.moveTo(49, 24); ctx.lineTo(53, 27); ctx.lineTo(49, 30); ctx.closePath(); ctx.fill();
+
+    // Right node — triggered flow
+    ctx.fillStyle = '#002222';
+    ctx.fillRect(53, 22, 9, 12);
+    ctx.strokeStyle = acc;
+    ctx.lineWidth = 1;
+    ctx.strokeRect(53, 22, 9, 12);
+    ctx.fillStyle = body;
+    ctx.font = 'bold 3px monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText('FLOW', 57, 29);
+
+    // "on: table_updated" label at bottom
+    ctx.fillStyle = '#00ffff';
+    ctx.font = 'bold 4.5px monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText('on: table_updated', 32, 58);
+}
+
+// ─── Business Requirement flying objects ──────────────────────────────────────
+
+const _BIZ_REQ_TEXTS = [
+    ['Make it pop', 'with AI'],
+    ['Real-time', 'everything'],
+    ['Add blockchain', 'NOW'],
+    ['Pivot the pivot', 'table'],
+    ['Why is it slow?', 'fix ASAP'],
+    ['CEO saw Tableau', 'wants same'],
+    ['Needs drill-down', 'to row level'],
+    ['Export to PDF', 'AND Excel'],
+    ['Mobile app', 'by Friday'],
+    ['More KPIs', 'less logic'],
+    ['Just use', 'ChatGPT'],
+    ['Make numbers', 'go up'],
+    ['Self-service BI', 'for everyone'],
+    ['Why no', 'real-time sync?'],
+    ['Move fast', 'break prod'],
+];
+
+function _drawBizReqSprite(ctx, lines) {
+    ctx.fillStyle = '#1a0008';
+    ctx.fillRect(2, 2, 60, 60);
+    ctx.strokeStyle = '#ff2244';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(2, 2, 60, 60);
+    // Top priority banner
+    ctx.fillStyle = '#cc0022';
+    ctx.fillRect(2, 2, 60, 12);
+    ctx.fillStyle = '#ffffff';
     ctx.font = 'bold 5px monospace';
     ctx.textAlign = 'center';
-    ctx.fillText('URGENT!', 32, 58);
-    // Arrow pointing up
-    ctx.strokeStyle = '#ff4444'; ctx.lineWidth = 2;
-    ctx.beginPath(); ctx.moveTo(50, 18); ctx.lineTo(50, 26); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(47, 21); ctx.lineTo(50, 18); ctx.lineTo(53, 21); ctx.stroke();
+    ctx.fillText('NEW REQUIREMENT', 32, 10);
+    // Requirement text lines
+    ctx.fillStyle = '#ffcccc';
+    ctx.font = 'bold 7px monospace';
+    const n = lines.length;
+    lines.forEach((line, i) => {
+        ctx.fillText(line, 32, 26 + i * 10);
+    });
+    // URGENT footer
+    ctx.fillStyle = '#ff4444';
+    ctx.font = 'bold 5px monospace';
+    ctx.fillText('!! URGENT !!', 32, 55);
+    ctx.strokeStyle = '#ff0033';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(4, 4, 56, 56);
+}
+
+// ─── Dashboard friendly ally sprites ──────────────────────────────────────────
+
+const _DASHBOARD_NAMES = [
+    'Revenue YTD', 'Churn Rate', 'MRR Trends',
+    'Q4 Pipeline', 'NPS Score', 'DAU/MAU',
+    'Conversion %', 'CAC Trend', 'LTV Chart',
+    'Funnel Drop', 'GMV Delta', 'ARR Forecast',
+];
+
+function _drawDashboardSprite(ctx, name) {
+    ctx.fillStyle = '#001a0e';
+    ctx.fillRect(2, 2, 60, 60);
+    ctx.strokeStyle = '#00ff88';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(2, 2, 60, 60);
+    // Title bar
+    ctx.fillStyle = '#003322';
+    ctx.fillRect(2, 2, 60, 11);
+    ctx.fillStyle = '#00ff88';
+    ctx.font = 'bold 4.5px monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText(name || 'Dashboard', 32, 9.5);
+    // Bar chart
+    const barH = [18, 28, 22, 36, 30, 40];
+    barH.forEach((h, i) => {
+        ctx.fillStyle = i === barH.length - 1 ? '#00ff44' : '#009944';
+        ctx.fillRect(5 + i * 9, 52 - h, 7, h);
+    });
+    // Trend line overlay
+    ctx.strokeStyle = '#ffaa00';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    const pts = [12, 22, 18, 33, 26, 37];
+    ctx.moveTo(5, 52 - pts[0]);
+    pts.forEach((v, i) => { if (i > 0) ctx.lineTo(5 + i * 9, 52 - v); });
+    ctx.stroke();
+    // ALLY label
+    ctx.fillStyle = '#00ff88';
+    ctx.font = 'bold 4px monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText('[ ALLY ]', 32, 61);
 }
 
 // ─── Urgent Ticket nonsense requirements ─────────────────────────────────────
@@ -566,8 +757,10 @@ class BossAbilityController {
         }
 
         switch (def.bossAbility) {
-            case 'spawn_duplicates':  this._tickSpawnDuplicates(dt, player, audio); break;
-            case 'scheduled_reports': this._tickScheduledReports(dt, player, audio, def); break;
+            case 'spawn_duplicates':       this._tickSpawnDuplicates(dt, player, audio); break;
+            case 'scheduled_reports':      this._tickScheduledReports(dt, player, audio, def); break;
+            case 'table_events':           this._tickTableEvents(dt, player, audio, def); break;
+            case 'business_requirements':  this._tickBusinessRequirements(dt, player, audio, def); break;
             default: break;
         }
     }
@@ -659,6 +852,84 @@ class BossAbilityController {
         }
         if (audio) audio.play('enemy_alert');
     }
+
+    _tickBusinessRequirements(dt, player, audio, def) {
+        // Fire a spread of business requirements toward the player every N ms.
+        // Requirements can be intercepted by KAI Assistant and converted into Dashboards.
+        this._timers.req = (this._timers.req ?? 0) - dt;
+        if (this._timers.req <= 0) {
+            this._timers.req = def.bossReqInterval ?? 3200;
+            const count = def.bossReqCount ?? 3;
+            const dx = player.x - this._enemy.x;
+            const dy = player.y - this._enemy.y;
+            const len = Math.sqrt(dx * dx + dy * dy);
+            if (len < 0.01 || !this._em) return;
+            const ndx = dx / len;
+            const ndy = dy / len;
+            for (let i = 0; i < count; i++) {
+                const spread = count === 1 ? 0 : ((i / (count - 1)) - 0.5) * 0.9;
+                const cos = Math.cos(spread);
+                const sin = Math.sin(spread);
+                const fdx = ndx * cos - ndy * sin;
+                const fdy = ndx * sin + ndy * cos;
+                this._em._spawnBusinessRequirement(
+                    this._enemy.x + fdx * 0.8,
+                    this._enemy.y + fdy * 0.8,
+                    player, def,
+                );
+            }
+            if (audio) audio.play('enemy_shoot');
+        }
+    }
+
+    _tickTableEvents(dt, player, audio, def) {
+        // Periodically spawn a table event that travels toward this boss.
+        // Player must intercept it — each hit damages the boss.
+        // Each event that reaches the boss triggers a projectile barrage.
+        this._timers.event = (this._timers.event ?? 0) - dt;
+        if (this._timers.event <= 0) {
+            this._timers.event = def.bossEventInterval ?? 3500;
+            if (this._em) {
+                const radius = def.bossEventRadius ?? 9;
+                // Retry up to 8 angles to avoid spawning inside a wall
+                for (let attempt = 0; attempt < 8; attempt++) {
+                    const angle = Math.random() * Math.PI * 2;
+                    const sx = this._enemy.x + Math.cos(angle) * radius;
+                    const sy = this._enemy.y + Math.sin(angle) * radius;
+                    if (!isWall(this._em._map, sx, sy)) {
+                        this._em._spawnTableEvent(sx, sy, this._enemy.x, this._enemy.y);
+                        break;
+                    }
+                }
+            }
+        }
+    }
+
+    _onTableEventReceived(player, audio, def) {
+        // Boss was reached by a table event — fire a barrage toward player
+        const count = def.bossEventBarrageCount ?? 3;
+        const dx = player.x - this._enemy.x;
+        const dy = player.y - this._enemy.y;
+        const len = Math.sqrt(dx * dx + dy * dy);
+        if (len < 0.01 || !this._em) return;
+        const ndx = dx / len;
+        const ndy = dy / len;
+        for (let i = 0; i < count; i++) {
+            const spread = ((i / (count - 1)) - 0.5) * 0.55;
+            const cos = Math.cos(spread);
+            const sin = Math.sin(spread);
+            const fdx = ndx * cos - ndy * sin;
+            const fdy = ndx * sin + ndy * cos;
+            this._em._spawnEnemyProjectile(
+                this._enemy.x + fdx * 0.7,
+                this._enemy.y + fdy * 0.7,
+                fdx, fdy,
+                this._enemy.damage,
+                def.projSpeed ?? 0.26,
+            );
+        }
+        if (audio) audio.play('enemy_shoot');
+    }
 }
 
 // ─── Enemy ────────────────────────────────────────────────────────────────────
@@ -684,8 +955,10 @@ export class Enemy {
         this._scene       = scene;
         this._abilityCtrl = this.def.bossAbility ? new BossAbilityController(this) : null;
         // Assign kind-appropriate label — tables for table enemies, flow names for flows, tickets for urgent_ticket
-        this._tableName   = kind === 'flow_specter'   ? _randomFlowName()
+        this._tableName   = kind === 'flow_specter'    ? _randomFlowName()
                           : kind === 'urgent_ticket'  ? _TICKET_TEXTS[Math.floor(Math.random() * _TICKET_TEXTS.length)]
+                          : kind === 'extractor_boss' ? 'Generic_extractor'
+                          : kind === 'trigger_boss'   ? 'on: table_updated'
                           : _randomTable();
 
         this._createMesh(kind, scene);
@@ -749,7 +1022,7 @@ export class Enemy {
         } else if (isBoss) {
             switch (kind) {
                 case 'extractor_boss':   _drawExtractorSprite(ctx, body, acc);  break;
-                case 'validator_boss':   _drawValidatorSprite(ctx, body, acc, this._abilityCtrl?._phase ?? 0); break;
+                case 'trigger_boss':     _drawTriggerBossSprite(ctx, body, acc); break;
                 case 'optimizer_boss':   _drawOptimizerSprite(ctx, body, acc);  break;
                 case 'aggregator_boss':  _drawAggregatorSprite(ctx, body, acc); break;
                 case 'stakeholder_boss': _drawStakeholderSprite(ctx, body, acc);break;
@@ -818,6 +1091,7 @@ export class Enemy {
         const hpLabel = kind === 'flow_specter'  ? `${this.health} retries`
                       : kind === 'sql_mutant'    ? `${this.health}% scanned`
                       : kind === 'urgent_ticket' ? `priority: P${this.health}`
+                      : kind === 'trigger_boss'  ? `${this.health} events`
                       : `${this.health} rows`;
         ctx.fillStyle = '#ffffff';
         ctx.font      = `bold ${isBoss ? 9 : 7}px monospace`;
@@ -829,8 +1103,10 @@ export class Enemy {
 
     isAlive() { return this.state !== STATE.DEAD; }
 
-    takeDamage(amount, audio) {
+    takeDamage(amount, audio, fromEvent = false, fromAlly = false) {
         if (this.state === STATE.DEAD) return;
+        if (this.def.immuneToAll && !fromAlly) return;
+        if (this.def.immuneToDirect && !fromEvent && !fromAlly) return;
         this.health -= amount;
         this._hitFlash = 180;
         if (this.health <= 0) {
@@ -1416,6 +1692,448 @@ export class Projectile {
     }
 }
 
+// ─── TableEvent ───────────────────────────────────────────────────────────────
+// Slowly drifts toward the trigger_boss. Player must intercept it to deal damage.
+// If it reaches the boss, the boss fires a barrage.
+
+const _TABLE_NAMES_FOR_EVENTS = [
+    'in.c-staging.orders', 'in.c-staging.users', 'in.c-staging.events',
+    'in.c-raw.clicks', 'in.c-raw.sessions', 'in.c-staging.products',
+    'in.c-raw.api_logs', 'in.c-staging.transactions',
+];
+
+export class TableEvent {
+    constructor(x, y, targetX, targetY, scene) {
+        this.x       = x;
+        this.y       = y;
+        this.removed = false;
+        this._scene  = scene;
+        this._tableName = _TABLE_NAMES_FOR_EVENTS[
+            Math.floor(Math.random() * _TABLE_NAMES_FOR_EVENTS.length)
+        ];
+
+        const dx  = targetX - x;
+        const dy  = targetY - y;
+        const len = Math.sqrt(dx * dx + dy * dy);
+        const speed = 0.022;  // slow enough to intercept
+        this.dx = (dx / len) * speed;
+        this.dy = (dy / len) * speed;
+
+        if (scene) this._createMesh(scene);
+    }
+
+    _createMesh(scene) {
+        const id = ++_projSerial;
+        this._meshId = id;
+
+        // Glowing cyan cube
+        this.mesh = BABYLON.MeshBuilder.CreateBox(`tevt_${id}`, { size: 0.28 }, scene);
+        this.mesh.position   = new BABYLON.Vector3(this.x, 0.5, this.y);
+        this.mesh.isPickable = false;
+
+        const mat = new BABYLON.StandardMaterial(`tevm_${id}`, scene);
+        mat.emissiveColor = new BABYLON.Color3(0.0, 1.0, 0.9);
+        this.mesh.material = mat;
+
+        // Label billboard
+        const sz = 256;
+        const labelTex = new BABYLON.DynamicTexture(`tevl_${id}`, { width: sz, height: 32 }, scene, false);
+        labelTex.hasAlpha = true;
+        const ctx = labelTex.getContext();
+        ctx.clearRect(0, 0, sz, 32);
+        ctx.fillStyle = 'rgba(0,20,20,0.85)';
+        ctx.fillRect(0, 0, sz, 32);
+        ctx.strokeStyle = '#00ffcc';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(1, 1, sz - 2, 30);
+        ctx.fillStyle = '#00ffcc';
+        ctx.font = 'bold 14px monospace';
+        ctx.textAlign = 'center';
+        ctx.fillText('Table update', sz / 2, 21);
+        labelTex.update();
+
+        this.labelMesh = BABYLON.MeshBuilder.CreatePlane(`tevlm_${id}`, { width: 1.4, height: 0.18 }, scene);
+        this.labelMesh.billboardMode = BABYLON.Mesh.BILLBOARDMODE_ALL;
+        this.labelMesh.position      = new BABYLON.Vector3(this.x, 0.85, this.y);
+        this.labelMesh.isPickable    = false;
+
+        const lmat = new BABYLON.StandardMaterial(`tevlmat_${id}`, scene);
+        lmat.diffuseTexture             = labelTex;
+        lmat.diffuseTexture.hasAlpha    = true;
+        lmat.useAlphaFromDiffuseTexture = true;
+        lmat.emissiveColor              = new BABYLON.Color3(1, 1, 1);
+        lmat.backFaceCulling            = false;
+        this.labelMesh.material         = lmat;
+        this._labelTex = labelTex;
+    }
+
+    update(dt, map) {
+        if (this.removed) return;
+        const scale = dt / 16;
+        const nx = this.x + this.dx * scale;
+        const ny = this.y + this.dy * scale;
+        if (isWall(map, nx, ny)) { this.dispose(); return; }
+        this.x = nx;
+        this.y = ny;
+        if (this.mesh) {
+            this.mesh.position.x = this.x;
+            this.mesh.position.z = this.y;
+            this.mesh.rotation.y += dt * 0.003;
+        }
+        if (this.labelMesh) {
+            this.labelMesh.position.x = this.x;
+            this.labelMesh.position.z = this.y;
+        }
+    }
+
+    dispose() {
+        this.removed = true;
+        if (this._labelTex) { this._labelTex.dispose(); this._labelTex = null; }
+        if (this.labelMesh) { this.labelMesh.material?.dispose(); this.labelMesh.dispose(); this.labelMesh = null; }
+        if (this.mesh)      { this.mesh.material?.dispose(); this.mesh.dispose(); this.mesh = null; }
+    }
+}
+
+// ─── BusinessRequirement ─────────────────────────────────────────────────────
+// Fired by The Stakeholder toward the player.
+// KAI Assistant projectile that hits it converts it to a friendly Dashboard.
+// Any other projectile just destroys it. Reaching the player deals damage.
+
+let _bizReqSerial = 0;
+
+export class BusinessRequirement {
+    constructor(x, y, targetPlayer, scene, speed = 0.085, damage = 18) {
+        this.x       = x;
+        this.y       = y;
+        this.damage  = damage;
+        this.removed = false;
+        this._scene  = scene;
+        this._text   = _BIZ_REQ_TEXTS[Math.floor(Math.random() * _BIZ_REQ_TEXTS.length)];
+
+        const dx  = targetPlayer.x - x;
+        const dy  = targetPlayer.y - y;
+        const len = Math.sqrt(dx * dx + dy * dy);
+        this.dx = len > 0.01 ? (dx / len) * speed : 0;
+        this.dy = len > 0.01 ? (dy / len) * speed : speed;
+
+        if (scene) this._createMesh(scene);
+    }
+
+    _createMesh(scene) {
+        const id = ++_bizReqSerial;
+        this._id = id;
+
+        const sz  = 128;
+        const tex = new BABYLON.DynamicTexture(`brq_tex_${id}`, { width: sz, height: sz }, scene, false);
+        tex.hasAlpha = true;
+        const ctx = tex.getContext();
+        ctx.save(); ctx.scale(2, 2);
+        _drawBizReqSprite(ctx, this._text);
+        ctx.restore();
+        tex.update();
+        this._tex = tex;
+
+        this.mesh = BABYLON.MeshBuilder.CreatePlane(`bizreq_${id}`, { width: 0.52, height: 0.52 }, scene);
+        this.mesh.billboardMode = BABYLON.Mesh.BILLBOARDMODE_ALL;
+        this.mesh.position      = new BABYLON.Vector3(this.x, 0.5, this.y);
+        this.mesh.isPickable    = false;
+
+        const mat = new BABYLON.StandardMaterial(`brq_mat_${id}`, scene);
+        mat.diffuseTexture             = tex;
+        mat.diffuseTexture.hasAlpha    = true;
+        mat.useAlphaFromDiffuseTexture = true;
+        mat.emissiveColor              = new BABYLON.Color3(1, 0.15, 0.25);
+        mat.backFaceCulling            = false;
+        this.mesh.material             = mat;
+    }
+
+    update(dt, map) {
+        if (this.removed) return;
+        const scale = dt / 16;
+        const nx = this.x + this.dx * scale;
+        const ny = this.y + this.dy * scale;
+        if (isWall(map, nx, ny)) { this.dispose(); return; }
+        this.x = nx;
+        this.y = ny;
+        if (this.mesh) {
+            this.mesh.position.x = this.x;
+            this.mesh.position.z = this.y;
+        }
+    }
+
+    dispose() {
+        this.removed = true;
+        if (this._tex)  { this._tex.dispose(); this._tex = null; }
+        if (this.mesh)  { this.mesh.material?.dispose(); this.mesh.dispose(); this.mesh = null; }
+    }
+}
+
+// ─── Dashboard ────────────────────────────────────────────────────────────────
+// Friendly ally created when a KAI Assistant projectile converts a BusinessRequirement.
+// Seeks The Stakeholder, stays in range, and fires at it periodically.
+// Dashboards are the only entities that can damage The Stakeholder.
+
+let _dashboardSerial = 0;
+
+class Dashboard {
+    constructor(x, y, scene) {
+        this.x       = x;
+        this.y       = y;
+        this.removed = false;
+        this._scene  = scene;
+        this._name   = _DASHBOARD_NAMES[Math.floor(Math.random() * _DASHBOARD_NAMES.length)];
+        this._fireTimer  = 1500 + Math.random() * 1000;
+        this._fireRate   = 2200;
+        this._damage     = 45;
+        this._speed      = 0.018;
+        this._attackRange = 7;
+
+        if (scene) this._createMesh(scene);
+    }
+
+    _createMesh(scene) {
+        const id = ++_dashboardSerial;
+        this._id = id;
+
+        const sz  = 128;
+        const tex = new BABYLON.DynamicTexture(`dash_tex_${id}`, { width: sz, height: sz }, scene, false);
+        const ctx = tex.getContext();
+        ctx.save(); ctx.scale(2, 2);
+        _drawDashboardSprite(ctx, this._name);
+        ctx.restore();
+        tex.update();
+        this._tex = tex;
+
+        this.mesh = BABYLON.MeshBuilder.CreatePlane(`dashboard_${id}`, { width: 0.7, height: 0.7 }, scene);
+        this.mesh.billboardMode = BABYLON.Mesh.BILLBOARDMODE_Y;
+        this.mesh.position      = new BABYLON.Vector3(this.x, 0.5, this.y);
+        this.mesh.isPickable    = false;
+
+        const mat = new BABYLON.StandardMaterial(`dash_mat_${id}`, scene);
+        mat.diffuseTexture  = tex;
+        mat.emissiveColor   = new BABYLON.Color3(0, 0.7, 0.4);
+        mat.backFaceCulling = false;
+        this.mesh.material  = mat;
+    }
+
+    update(dt, enemies, map, projectiles) {
+        if (this.removed) return;
+
+        const boss = enemies.find(e => e.isAlive() && e.def.id === 'stakeholder_boss');
+        if (!boss) {
+            // No boss — gently hover in place
+            if (this.mesh) this.mesh.rotation.y += dt * 0.001;
+            return;
+        }
+
+        const dx   = boss.x - this.x;
+        const dy   = boss.y - this.y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+
+        if (dist > this._attackRange) {
+            // Move toward boss
+            const speed = this._speed * (dt / 16);
+            const mx = (dx / dist) * speed;
+            const my = (dy / dist) * speed;
+            if (!isWall(map, this.x + mx + Math.sign(mx) * 0.2, this.y)) this.x += mx;
+            if (!isWall(map, this.x, this.y + my + Math.sign(my) * 0.2)) this.y += my;
+        } else {
+            // In range — fire at boss
+            this._fireTimer -= dt;
+            if (this._fireTimer <= 0 && dist > 0.1) {
+                this._fireTimer = this._fireRate;
+                projectiles.push(new Projectile(
+                    this.x + (dx / dist) * 0.5,
+                    this.y + (dy / dist) * 0.5,
+                    dx / dist, dy / dist,
+                    this._damage, 'ally',
+                    this._scene, 0, 0.28,
+                ));
+            }
+        }
+
+        if (this.mesh) {
+            this.mesh.position.x = this.x;
+            this.mesh.position.z = this.y;
+            this.mesh.rotation.y += dt * 0.0012;
+        }
+    }
+
+    dispose() {
+        this.removed = true;
+        if (this._tex)  { this._tex.dispose(); this._tex = null; }
+        if (this.mesh)  { this.mesh.material?.dispose(); this.mesh.dispose(); this.mesh = null; }
+    }
+}
+
+// ─── ColumnBlock ──────────────────────────────────────────────────────────────
+
+const L2_TYPE_COLORS = {
+    INT:     '#4488ff',
+    VARCHAR: '#ff8844',
+    BOOLEAN: '#44cc44',
+    FLOAT:   '#ffcc00',
+    DATE:    '#cc44ff',
+};
+
+class ColumnBlock {
+    constructor(scene, colDef, x, y) {
+        this.columnName = colDef.name;
+        this.columnType = colDef.type;
+        this.x = x;
+        this.y = y;
+        this._scene = scene;
+
+        const sz = 128;
+        this._tex = new BABYLON.DynamicTexture(`col_tex_${colDef.name}`, { width: sz, height: sz * 2 }, scene, false);
+        this._drawTexture();
+
+        this.mesh = BABYLON.MeshBuilder.CreateBox(`col_${colDef.name}`, { width: 0.6, height: 1.1, depth: 0.6 }, scene);
+        this.mesh.position = new BABYLON.Vector3(x, 0.55, y);
+        const mat = new BABYLON.StandardMaterial(`col_mat_${colDef.name}`, scene);
+        mat.diffuseTexture = this._tex;
+        mat.backFaceCulling = false;
+        this.mesh.material = mat;
+    }
+
+    _drawTexture() {
+        const ctx = this._tex.getContext();
+        const W = 128, H = 256;
+        const color = L2_TYPE_COLORS[this.columnType] ?? '#ffffff';
+
+        ctx.clearRect(0, 0, W, H);
+
+        // Babylon.js box UV maps textures flipped on both axes — draw rotated 180°
+        ctx.save();
+        ctx.translate(W, H);
+        ctx.scale(-1, -1);
+
+        ctx.fillStyle = '#0a0a18';
+        ctx.fillRect(0, 0, W, H);
+
+        // Header bar
+        ctx.fillStyle = color;
+        ctx.fillRect(0, 0, W, 36);
+
+        // Column name in header
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 14px monospace';
+        ctx.textAlign = 'center';
+        ctx.fillText(this.columnName, W / 2, 24);
+
+        // Divider
+        ctx.fillStyle = color;
+        ctx.fillRect(0, 40, W, 2);
+
+        // Type label
+        ctx.fillStyle = color;
+        ctx.font = 'bold 18px monospace';
+        ctx.fillText(this.columnType, W / 2, 80);
+
+        // Schema label
+        ctx.fillStyle = '#888888';
+        ctx.font = '11px monospace';
+        ctx.fillText('NOT NULL', W / 2, 110);
+
+        // Arrow pointing down toward incoming records
+        ctx.fillStyle = color;
+        ctx.font = 'bold 20px monospace';
+        ctx.fillText('▼', W / 2, 160);
+
+        ctx.restore();
+        ctx.textAlign = 'left';
+        this._tex.update();
+    }
+
+    dispose() {
+        this._tex.dispose();
+        this.mesh.material?.dispose();
+        this.mesh.dispose();
+    }
+}
+
+// ─── RecordBlock ──────────────────────────────────────────────────────────────
+
+class RecordBlock {
+    constructor(scene, targetColumn, value, startType, id) {
+        this.targetColumn = targetColumn;
+        this.value        = value;
+        this.currentType  = startType;
+        this.x            = targetColumn.x + (Math.random() - 0.5) * 0.4;
+        this.y            = 13.5;
+        this._alive       = true;
+        this._id          = id;
+        this._scene       = scene;
+
+        const sz = 128;
+        this._tex = new BABYLON.DynamicTexture(`rec_tex_${id}`, { width: sz, height: sz }, scene, false);
+        this._drawTexture();
+
+        this.mesh = BABYLON.MeshBuilder.CreateBox(`rec_${id}`, { width: 0.55, height: 0.55, depth: 0.55 }, scene);
+        this.mesh.billboardMode = BABYLON.Mesh.BILLBOARDMODE_Y;
+        this.mesh.position = new BABYLON.Vector3(this.x, 0.45, this.y);
+        const mat = new BABYLON.StandardMaterial(`rec_mat_${id}`, scene);
+        mat.diffuseTexture = this._tex;
+        mat.backFaceCulling = false;
+        this.mesh.material = mat;
+    }
+
+    _drawTexture() {
+        const ctx = this._tex.getContext();
+        const W = 128, H = 128;
+        const color = L2_TYPE_COLORS[this.currentType] ?? '#ffffff';
+
+        ctx.clearRect(0, 0, W, H);
+        ctx.fillStyle = '#0a0a18';
+        ctx.fillRect(0, 0, W, H);
+
+        // Colored border strip on left
+        ctx.fillStyle = color;
+        ctx.fillRect(0, 0, 5, H);
+
+        // Value text
+        ctx.fillStyle = '#ffff88';
+        ctx.font = 'bold 14px monospace';
+        ctx.textAlign = 'center';
+        ctx.fillText(this.value, W / 2 + 2, 42);
+
+        // Divider
+        ctx.fillStyle = '#333333';
+        ctx.fillRect(8, 56, W - 10, 1);
+
+        // Type label (colored, large)
+        ctx.fillStyle = color;
+        ctx.font = 'bold 16px monospace';
+        ctx.fillText(this.currentType, W / 2 + 2, 88);
+
+        // Target column indicator
+        ctx.fillStyle = '#666666';
+        ctx.font = '10px monospace';
+        ctx.fillText('→ ' + this.targetColumn.columnName, W / 2 + 2, 112);
+
+        ctx.textAlign = 'left';
+        this._tex.update();
+    }
+
+    cycle() {
+        const idx = L2_DATA_TYPES.indexOf(this.currentType);
+        this.currentType = L2_DATA_TYPES[(idx + 1) % L2_DATA_TYPES.length];
+        this._drawTexture();
+    }
+
+    update(dt) {
+        this.y -= L2_RECORD_SPEED * dt;
+        this.mesh.position.z = this.y;
+    }
+
+    dispose() {
+        this._tex.dispose();
+        this.mesh.material?.dispose();
+        this.mesh.dispose();
+        this._alive = false;
+    }
+}
+
 // ─── EntityManager ────────────────────────────────────────────────────────────
 
 export class EntityManager {
@@ -1426,11 +2144,27 @@ export class EntityManager {
         this.enemies     = [];
         this.items       = [];
         this.projectiles = [];
-        this._scoreQueue = 0;
-        this._bossDead   = false;
-        this._deadPool   = [];
-        this._difficulty = difficulty;
-        this._hadBoss    = false;
+        this._scoreQueue    = 0;
+        this._bossDead      = false;
+        this._deadPool      = [];
+        this._difficulty    = difficulty;
+        this._hadBoss       = false;
+        this.tableEvents         = [];
+        this.businessRequirements = [];
+        this.dashboards           = [];
+        this._stakeholderMode     = level.mode === 'stakeholder_fight';
+        this._pendingMessage = null;
+        // L2 Type Cast mode state
+        this._l2Mode         = level.mode === 'type_cast';
+        this._l2Columns      = [];
+        this._l2Records      = [];
+        this._l2TotalRecords = 0;
+        this._l2Inserted     = 0;
+        this._l2SpawnTimer   = 0;
+        this._l2SpawnIdx     = 0;
+        this._l2Mismatch     = false;
+        this._l2MismatchMsg  = '';
+        this._l2SpawnList    = [];
 
         const DAMAGE_MULT = [0.6, 1.0, 1.4];
         const damageMult  = DAMAGE_MULT[difficulty] ?? 1.0;
@@ -1447,6 +2181,7 @@ export class EntityManager {
                 this.items.push(new Item(spawn.kind, spawn.x, spawn.y, scene));
             }
         }
+        if (this._l2Mode) this._initL2Mode(difficulty);
     }
 
     getMap() { return this._map; }
@@ -1462,6 +2197,132 @@ export class EntityManager {
         this.projectiles.push(new Projectile(x, y, dx, dy, damage, 'enemy', this._scene, 0, speed));
     }
 
+    _spawnTableEvent(x, y, targetX, targetY) {
+        this.tableEvents.push(new TableEvent(x, y, targetX, targetY, this._scene));
+    }
+
+    _spawnBusinessRequirement(x, y, player, def) {
+        this.businessRequirements.push(new BusinessRequirement(
+            x, y, player, this._scene,
+            def.bossReqSpeed ?? 0.085,
+            def.bossReqDamage ?? 18,
+        ));
+    }
+
+    _convertToDashboard(x, y) {
+        this.dashboards.push(new Dashboard(x, y, this._scene));
+        if (this._audio) this._audio.play('pickup_weapon');
+    }
+
+    getDashboardCount() { return this.dashboards.length; }
+
+    _initL2Mode(difficulty) {
+        const colXs = [2.5, 4.5, 7.5, 10.5, 13.5];
+        for (let i = 0; i < L2_COLUMN_DEFS.length; i++) {
+            this._l2Columns.push(new ColumnBlock(this._scene, L2_COLUMN_DEFS[i], colXs[i], 2.5));
+        }
+
+        this._l2TotalRecords = L2_RECORDS_BY_DIFFICULTY[difficulty] ?? 10;
+
+        // Pre-build spawn list
+        const VALUES = {
+            INT:     ['42', '1337', '0', '404', '9999', '7', '256'],
+            VARCHAR: ["'Alice'", "'Bob'", "'NULL'", "'data'", "'hello'"],
+            BOOLEAN: ['true', 'false', 'true', 'false'],
+            FLOAT:   ['3.14', '99.9', '0.001', '1.5', '42.0'],
+            DATE:    ["'2024-01-01'", "'NOW()'", "'2023-12-31'"],
+        };
+        for (let i = 0; i < this._l2TotalRecords; i++) {
+            const colIdx    = i % L2_COLUMN_DEFS.length;
+            const colDef    = L2_COLUMN_DEFS[colIdx];
+            const vals      = VALUES[colDef.type];
+            const value     = vals[i % vals.length];
+            const startType = L2_DATA_TYPES[Math.floor(Math.random() * L2_DATA_TYPES.length)];
+            this._l2SpawnList.push({ colIdx, value, startType });
+        }
+    }
+
+    _updateL2Mode(dt, player) {
+        const maxConcurrent = L2_MAX_CONCURRENT[this._difficulty] ?? 2;
+        const spawnInterval = L2_SPAWN_INTERVALS[this._difficulty] ?? 5000;
+
+        this._l2SpawnTimer += dt;
+        if (this._l2SpawnTimer >= spawnInterval &&
+            this._l2Records.length < maxConcurrent &&
+            this._l2SpawnIdx < this._l2TotalRecords) {
+            const spec   = this._l2SpawnList[this._l2SpawnIdx++];
+            const col    = this._l2Columns[spec.colIdx];
+            const rec    = new RecordBlock(this._scene, col, spec.value, spec.startType, this._l2SpawnIdx);
+            this._l2Records.push(rec);
+            this._l2SpawnTimer = 0;
+        }
+
+        const toRemove = [];
+        for (const rec of this._l2Records) {
+            rec.update(dt);
+
+            const dx = rec.x - rec.targetColumn.x;
+            const dy = rec.y - rec.targetColumn.y;
+            if (dx * dx + dy * dy < L2_COLUMN_HIT_R2) {
+                if (rec.currentType === rec.targetColumn.columnType) {
+                    this._l2Inserted++;
+                    this._scoreQueue += 500;
+                    this._pendingMessage = `INSERT OK: ${rec.value}::${rec.currentType} → ${rec.targetColumn.columnName}`;
+                } else {
+                    this._l2Mismatch    = true;
+                    this._l2MismatchMsg = `TYPE MISMATCH: column '${rec.targetColumn.columnName}' expects ${rec.targetColumn.columnType}, got ${rec.currentType}`;
+                    player.takeDamage(9999);
+                }
+                rec.dispose();
+                toRemove.push(rec);
+            }
+        }
+        this._l2Records = this._l2Records.filter(r => !toRemove.includes(r));
+    }
+
+    _castCanonFire(player) {
+        const dx = player.dirX;
+        const dy = player.dirY;
+        const STEP = 0.08;
+        const MAX_STEPS = Math.ceil(30 / STEP);
+
+        let tx = player.x + dx * 0.4;
+        let ty = player.y + dy * 0.4;
+
+        for (let i = 0; i < MAX_STEPS; i++) {
+            tx += dx * STEP;
+            ty += dy * STEP;
+            if (isWall(this._map, tx, ty)) break;
+
+            for (const rec of this._l2Records) {
+                const ex = rec.x - tx;
+                const ey = rec.y - ty;
+                if (ex * ex + ey * ey < L2_CAST_HIT_R2) {
+                    rec.cycle();
+                    if (this._audio) this._audio.play('cast_hit');
+                    return;
+                }
+            }
+        }
+    }
+
+    _hitTableEvent(evt, _weaponDamage) {
+        // Player intercepted a table event — damage the immune boss and remove the event.
+        // Damage is always maxHP/6 so it takes exactly 6 interceptions to kill the boss,
+        // regardless of which weapon the player used.
+        evt.dispose();
+        this._scoreQueue += 100;
+        for (const enemy of this.enemies) {
+            if (enemy.def.immuneToDirect && enemy.isAlive()) {
+                const dmg = Math.ceil(enemy.def.health / 6);
+                enemy.takeDamage(dmg, this._audio, true);
+                if (!enemy.isAlive()) this._scoreQueue += enemy.score;
+                break;
+            }
+        }
+        if (this._audio) this._audio.play('enemy_alert');
+    }
+
     _reviveRandomDead(audio) {
         // Spawn a new zombie near the dead zone of the map
         const dead = this._deadPool;
@@ -1475,15 +2336,17 @@ export class EntityManager {
         if (def.dropAll) {
             for (const enemy of this.enemies) {
                 if (!enemy.isAlive()) continue;
+                if (enemy.def.isBoss) continue;  // bosses survive DROP ALL TABLES
                 enemy.takeDamage(def.damage, this._audio);
                 if (!enemy.isAlive()) this._scoreQueue += enemy.score;
             }
             return;
         }
+        if (def.hitscanCast) { this._castCanonFire(player); return; }
         if (def.melee)     { this._meleeFire(player, def);   return; }
         if (def.pellets)   { this._shotgunFire(player, def); return; }
         if (def.projectile) {
-            this.projectiles.push(new Projectile(
+            const proj = new Projectile(
                 player.x + player.dirX * 0.5,
                 player.y + player.dirY * 0.5,
                 player.dirX, player.dirY,
@@ -1491,7 +2354,9 @@ export class EntityManager {
                 this._scene,
                 def.splashRadius ?? 0,
                 def.projSpeed ?? 0.25,
-            ));
+            );
+            if (def.id === 'kai_assistant') proj.isKai = true;
+            this.projectiles.push(proj);
             return;
         }
         this._hitscanFire(player, def, player.dirX, player.dirY);
@@ -1513,11 +2378,29 @@ export class EntityManager {
             tx += dx * STEP;
             ty += dy * STEP;
             if (isWall(this._map, tx, ty)) break;
+            // Check table events first — intercepting one damages the immune boss
+            for (const evt of this.tableEvents) {
+                if (evt.removed) continue;
+                const ex = evt.x - tx;
+                const ey = evt.y - ty;
+                if (ex * ex + ey * ey < HIT_R2) {
+                    this._hitTableEvent(evt, def.damage);
+                    return;
+                }
+            }
             for (const enemy of this.enemies) {
                 if (!enemy.isAlive()) continue;
                 const ex = enemy.x - tx;
                 const ey = enemy.y - ty;
                 if (ex * ex + ey * ey < HIT_R2) {
+                    if (enemy.def.immuneToAll) {
+                        this._pendingMessage = 'Player fire has no effect. Convert requirements with KAI Assistant to spawn Dashboards.';
+                        return;
+                    }
+                    if (enemy.def.immuneToDirect) {
+                        this._pendingMessage = "You can't kill triggered flows. You must kill all update events.";
+                        return;
+                    }
                     enemy.takeDamage(def.damage, this._audio);
                     if (!enemy.isAlive()) this._scoreQueue += enemy.score;
                     return;
@@ -1561,16 +2444,106 @@ export class EntityManager {
     }
 
     update(dt, player) {
+        if (this._l2Mode) this._updateL2Mode(dt, player);
         for (const e of this.enemies)     e.update(dt, player, this._map, this._audio, this.projectiles);
         for (const item of this.items)    item.update(dt);
+
+        // Update table events and check if any reached an immune boss
+        for (const evt of this.tableEvents) {
+            evt.update(dt, this._map);
+            if (!evt.removed) {
+                for (const enemy of this.enemies) {
+                    if (!enemy.def.immuneToDirect || !enemy.isAlive()) continue;
+                    const dx = enemy.x - evt.x;
+                    const dy = enemy.y - evt.y;
+                    if (dx * dx + dy * dy < 0.64) {
+                        // Event reached the boss — trigger barrage
+                        if (enemy._abilityCtrl) {
+                            enemy._abilityCtrl._onTableEventReceived(player, this._audio, enemy.def);
+                        }
+                        evt.dispose();
+                        break;
+                    }
+                }
+            }
+        }
+        this.tableEvents = this.tableEvents.filter(e => !e.removed);
+
+        // ── Business requirements (stakeholder fight mode) ────────────────────
+        if (this._stakeholderMode) {
+            for (const br of this.businessRequirements) {
+                br.update(dt, this._map);
+                if (!br.removed) {
+                    const bdx = player.x - br.x;
+                    const bdy = player.y - br.y;
+                    if (bdx * bdx + bdy * bdy < 0.22) {
+                        player.takeDamage(br.damage);
+                        this._audio.play('player_hurt');
+                        br.dispose();
+                    }
+                }
+            }
+            this.businessRequirements = this.businessRequirements.filter(br => !br.removed);
+
+            // Dashboards move and fire at boss
+            for (const db of this.dashboards) {
+                db.update(dt, this.enemies, this._map, this.projectiles);
+            }
+        }
 
         for (const p of this.projectiles) {
             const wasRemoved = p.removed;
             p.update(dt, this._map);
             const hitWall = !wasRemoved && p.removed;
 
-            if (p.owner === 'player') {
+            if (p.owner === 'ally') {
+                // Dashboard projectile — only harms stakeholder_boss (bypasses immuneToAll)
+                if (!p.removed) {
+                    for (const enemy of this.enemies) {
+                        if (!enemy.isAlive() || enemy.def.id !== 'stakeholder_boss') continue;
+                        const dx = enemy.x - p.x;
+                        const dy = enemy.y - p.y;
+                        if (dx * dx + dy * dy < 0.25) {
+                            enemy.takeDamage(p.damage, this._audio, false, true);
+                            if (!enemy.isAlive()) this._scoreQueue += enemy.score;
+                            p.removed = true; p.disposeMesh();
+                            break;
+                        }
+                    }
+                }
+            } else if (p.owner === 'player') {
                 let detonated = hitWall && p.splashRadius > 0;
+
+                // Check player projectile hitting a table event
+                if (!p.removed) {
+                    for (const evt of this.tableEvents) {
+                        if (evt.removed) continue;
+                        const ex = evt.x - p.x;
+                        const ey = evt.y - p.y;
+                        if (ex * ex + ey * ey < 0.16) {
+                            this._hitTableEvent(evt, p.damage);
+                            p.removed = true; p.disposeMesh();
+                            break;
+                        }
+                    }
+                }
+
+                // Check KAI projectile hitting a business requirement → convert to dashboard
+                if (!p.removed && p.isKai && this._stakeholderMode) {
+                    for (const br of this.businessRequirements) {
+                        if (br.removed) continue;
+                        const ex = br.x - p.x;
+                        const ey = br.y - p.y;
+                        if (ex * ex + ey * ey < 0.22) {
+                            this._convertToDashboard(br.x, br.y);
+                            this._pendingMessage = `Requirement converted! ${this.dashboards.length} dashboard${this.dashboards.length !== 1 ? 's' : ''} fighting for you.`;
+                            this._scoreQueue += 300;
+                            br.dispose();
+                            p.removed = true; p.disposeMesh();
+                            break;
+                        }
+                    }
+                }
 
                 if (!p.removed || hitWall) {
                     for (const enemy of this.enemies) {
@@ -1578,6 +2551,14 @@ export class EntityManager {
                         const dx = enemy.x - p.x;
                         const dy = enemy.y - p.y;
                         if (dx * dx + dy * dy < 0.16) {
+                            if (enemy.def.immuneToAll) {
+                                this._pendingMessage = 'Player fire has no effect. Convert requirements with KAI Assistant.';
+                                p.removed = true; p.disposeMesh(); break;
+                            }
+                            if (enemy.def.immuneToDirect) {
+                                this._pendingMessage = "You can't kill triggered flows. You must kill all update events.";
+                                p.removed = true; p.disposeMesh(); break;
+                            }
                             if (p.splashRadius === 0) {
                                 enemy.takeDamage(p.damage, this._audio);
                                 if (!enemy.isAlive()) this._scoreQueue += enemy.score;
@@ -1594,6 +2575,7 @@ export class EntityManager {
                     spawnExplosion(p.x, p.y, p.splashRadius, this._scene);
                     for (const enemy of this.enemies) {
                         if (!enemy.isAlive()) continue;
+                        if (enemy.def.immuneToAll || enemy.def.immuneToDirect) continue;
                         const dx = enemy.x - p.x;
                         const dy = enemy.y - p.y;
                         const d  = Math.sqrt(dx * dx + dy * dy);
@@ -1646,13 +2628,29 @@ export class EntityManager {
         return bosses.length > 0 && bosses.every(e => !e.isAlive());
     }
 
-    allEnemiesDefeated() { return this.bossDefeated(); }
+    allEnemiesDefeated() {
+        if (this._l2Mode) {
+            return this._l2Inserted >= this._l2TotalRecords &&
+                   this._l2SpawnIdx >= this._l2TotalRecords;
+        }
+        return this.bossDefeated();
+    }
+
+    popMessage() {
+        const msg = this._pendingMessage;
+        this._pendingMessage = null;
+        return msg;
+    }
 
     collectScore() {
         const s = this._scoreQueue;
         this._scoreQueue = 0;
         return s;
     }
+
+    isTypeMismatch()       { return this._l2Mismatch; }
+    getTypeMismatchMessage() { return this._l2MismatchMsg; }
+    getL2Progress()        { return { inserted: this._l2Inserted, total: this._l2TotalRecords }; }
 
     dispose() {
         for (const e of this.enemies) {
@@ -1663,8 +2661,15 @@ export class EntityManager {
             if (i.mesh)      { i.mesh.material?.dispose(); i.mesh.dispose(); }
             if (i.labelMesh) { i.labelMesh.material?.dispose(); i.labelMesh.dispose(); }
         }
+        for (const evt of this.tableEvents) evt.dispose();
+        for (const br of this.businessRequirements) br.dispose();
+        for (const db of this.dashboards) db.dispose();
         for (const p of this.projectiles) p.disposeMesh();
         this.enemies = []; this.items = []; this.projectiles = [];
+        this.businessRequirements = []; this.dashboards = [];
+        for (const col of (this._l2Columns ?? [])) col.dispose();
+        for (const rec of (this._l2Records  ?? [])) rec.dispose();
+        this._l2Columns = []; this._l2Records = [];
     }
 }
 

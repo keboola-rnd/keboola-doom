@@ -58,7 +58,7 @@ class Game {
         this._difficulty = 1; // 0=easy, 1=medium, 2=hard
         this._currentMissionIdx = 0;
         this._unlockedMissions  = 1;
-        this._missionScores     = [0, 0, 0, 0, 0];
+        this._missionScores     = [0, 0, 0, 0];
         this._totalScore        = 0;
         this._loadProgress();
 
@@ -151,6 +151,7 @@ class Game {
         engine.runRenderLoop(() => {
             if (this._state === GSTATE.PLAYING) {
                 const dt = Math.min(engine.getDeltaTime(), 50);
+                this._lastDt = dt;
                 this._update(dt);
             }
             // Only render when the scene has an active camera
@@ -292,6 +293,22 @@ class Game {
 
         this._player._map = mission.map;
 
+        if (mission.mode === 'type_cast') {
+            this._player.weapons = new Set(['cast_canon']);
+            this._player.activeWeapon = 'cast_canon';
+        }
+
+        if (mission.mode === 'stakeholder_fight') {
+            // Give all offensive weapons + unlimited KAI tokens; KAI active by default
+            ['sql_gun', 'data_shotgun', 'pipeline_launcher', 'bfd_9000', 'kai_assistant', 'drop_all_tables']
+                .forEach(w => this._player.giveWeapon(w));
+            this._player.activeWeapon = 'kai_assistant';
+            this._player.ammo.tokens = MAX_AMMO.tokens;
+            this._player.ammo.bullets = MAX_AMMO.bullets;
+            this._player.ammo.shells  = MAX_AMMO.shells;
+            this._player.ammo.rockets = MAX_AMMO.rockets;
+        }
+
         this._state = GSTATE.PLAYING;
         this._audio.startMusic();
     }
@@ -319,8 +336,12 @@ class Game {
             this._audio.stopGodMusic();
             this._player.detachControl();
             this._audio.playFile('./crash.mp3');
+            const _mission = MISSIONS[this._currentMissionIdx];
+            const _mismatchMsg = (_mission.mode === 'type_cast')
+                ? this._entityManager?.getTypeMismatchMessage()
+                : null;
             document.getElementById('death-msg').textContent =
-                DEATH_MESSAGES[Math.floor(Math.random() * DEATH_MESSAGES.length)];
+                _mismatchMsg || DEATH_MESSAGES[Math.floor(Math.random() * DEATH_MESSAGES.length)];
             document.getElementById('death-score').textContent = `FINAL SCORE: ${this._score}`;
             this._deathScreen.style.display = 'flex';
             return;
@@ -398,12 +419,35 @@ class Game {
         this._cheatTimeout = setTimeout(() => { el.style.display = 'none'; }, 3500);
     }
 
+    _showGameMessage(msg) {
+        const el = document.getElementById('game-msg');
+        el.textContent = msg;
+        el.style.display = 'block';
+        clearTimeout(this._gameMsgTimeout);
+        this._gameMsgTimeout = setTimeout(() => { el.style.display = 'none'; }, 3000);
+    }
+
     _drawHud() {
-        const killsLeft = this._entityManager
-            ? this._entityManager.enemies.filter(e => e.isAlive()).length
-            : 0;
+        const _currentMission = MISSIONS[this._currentMissionIdx];
+        const killsLeft = (() => {
+            if (!this._entityManager) return 0;
+            if (_currentMission?.mode === 'type_cast') {
+                const p = this._entityManager.getL2Progress();
+                return p.total - p.inserted;
+            }
+            if (_currentMission?.mode === 'stakeholder_fight') {
+                return this._entityManager.getDashboardCount();
+            }
+            return this._entityManager.enemies.filter(e => e.isAlive()).length;
+        })();
         const enemies = this._entityManager ? this._entityManager.enemies : [];
         const mission = MISSIONS[this._currentMissionIdx];
+
+        if (this._entityManager) {
+            const msg = this._entityManager.popMessage();
+            if (msg) this._showGameMessage(msg);
+        }
+
         this._hud.draw(this._hudCtx, this._player, this._weaponSystem, this._score, killsLeft, enemies,
             mission?.id, mission?.name);
     }

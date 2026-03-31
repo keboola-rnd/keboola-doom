@@ -64,7 +64,7 @@ const SPAWNS_L0 = [
     { type: 'item',  kind: 'weapon_bfd',      x: 1.5,  y: 21.5 },
 ];
 
-// ─── L1: Staging Layer ────────────────────────────────────────────────────────
+// ─── L1: Trigger Flow ─────────────────────────────────────────────────────────
 // Symmetric staging zones separated by walls — clean corridors, filter rooms
 const MAP_L1 = [
 //  0  1  2  3  4  5  6  7  8  9  10 11 12 13 14 15 16 17 18 19 20 21 22 23
@@ -120,74 +120,36 @@ const SPAWNS_L1 = [
     { type: 'item',  kind: 'health_large',    x: 20.5, y: 20.5 },
     { type: 'enemy', kind: 'config_monster',  x: 5.5,  y: 18.5, minDifficulty: 0 },
     { type: 'enemy', kind: 'config_monster',  x: 18.5, y: 18.5, minDifficulty: 0 },
-    { type: 'enemy', kind: 'validator_boss',  x: 11.5, y: 21.5, minDifficulty: 0 },
+    { type: 'enemy', kind: 'trigger_boss',    x: 11.5, y: 21.5, minDifficulty: 0 },
     { type: 'enemy', kind: 'flow_specter',    x: 8.5,  y: 21.5, minDifficulty: 1 },
     { type: 'enemy', kind: 'flow_specter',    x: 14.5, y: 21.5, minDifficulty: 1 },
     { type: 'item',  kind: 'weapon_bfd',      x: 22.5, y: 20.5 },
     { type: 'item',  kind: 'ammo_rockets',    x: 1.5,  y: 20.5 },
 ];
 
-// ─── L2: Transformation Layer ─────────────────────────────────────────────────
-// SQL engine room — central chamber with corridors radiating out, tech walls
+// ─── L2: Native Types ─────────────────────────────────────────────────────────
+// Type cast arena — compact open room, pure type-matching gameplay
 const MAP_L2 = [
-//  0  1  2  3  4  5  6  7  8  9  10 11 12 13 14 15 16 17 18 19 20 21 22 23
-    [4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4], // 0
-    [4, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 4], // 1
-    [4, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 4], // 2
-    [4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4], // 3
-    [4, 4, 0, 4, 4, 4, 4, 4, 0, 4, 4, 4, 4, 4, 4, 4, 0, 4, 4, 4, 4, 4, 0, 4], // 4
-    [4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4], // 5
-    [4, 0, 4, 4, 0, 4, 0, 0, 0, 0, 4, 4, 4, 4, 0, 0, 0, 0, 4, 0, 4, 4, 0, 4], // 6
-    [4, 0, 4, 0, 0, 4, 0, 0, 0, 0, 4, 0, 0, 4, 0, 0, 0, 0, 4, 0, 0, 4, 0, 4], // 7
-    [4, 0, 4, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 4, 0, 4], // 8
-    [4, 0, 4, 0, 0, 4, 0, 0, 0, 0, 4, 0, 0, 4, 0, 0, 0, 0, 4, 0, 0, 4, 0, 4], // 9
-    [4, 0, 4, 4, 0, 4, 0, 0, 0, 0, 4, 4, 4, 4, 0, 0, 0, 0, 4, 0, 4, 4, 0, 4], // 10
-    [4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4], // 11
-    [4, 4, 0, 4, 4, 4, 4, 4, 0, 4, 4, 0, 0, 4, 4, 0, 4, 4, 4, 4, 4, 0, 4, 4], // 12
-    [4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4], // 13
-    [4, 0, 4, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 4, 0, 4], // 14
-    [4, 0, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 4], // 15
-    [4, 0, 4, 0, 0, 4, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 4, 0, 0, 4, 0, 4], // 16
-    [4, 0, 4, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 4, 0, 4], // 17
-    [4, 0, 4, 4, 0, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 4, 4, 0, 4], // 18
-    [4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4], // 19
-    [4, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 4], // 20
-    [4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4], // 21
-    [4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4], // 22
-    [4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4], // 23
+//  0  1  2  3  4  5  6  7  8  9  10 11 12 13 14 15
+    [4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4], // 0
+    [4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4], // 1
+    [4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4], // 2
+    [4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4], // 3
+    [4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4], // 4
+    [4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4], // 5
+    [4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4], // 6
+    [4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4], // 7
+    [4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4], // 8
+    [4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4], // 9
+    [4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4], // 10
+    [4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4], // 11
+    [4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4], // 12
+    [4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4], // 13
+    [4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4], // 14
+    [4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4], // 15
 ];
 
-const SPAWNS_L2 = [
-    // Start corridor (top-left)
-    { type: 'item',  kind: 'ammo_bullets',    x: 2.5,  y: 1.5 },
-    { type: 'item',  kind: 'weapon_shotgun',  x: 5.5,  y: 3.5 },
-    { type: 'enemy', kind: 'data_zombie',     x: 1.5,  y: 2.5,  minDifficulty: 0 },
-    { type: 'enemy', kind: 'flow_specter',    x: 11.5, y: 2.5,  minDifficulty: 0 },
-    { type: 'enemy', kind: 'sql_mutant',      x: 20.5, y: 2.5,  minDifficulty: 1 },
-    // Mid zone
-    { type: 'item',  kind: 'ammo_shells',     x: 3.5,  y: 8.5 },
-    { type: 'item',  kind: 'health_small',    x: 20.5, y: 8.5 },
-    { type: 'item',  kind: 'armor',           x: 11.5, y: 7.5 },
-    { type: 'enemy', kind: 'config_monster',  x: 6.5,  y: 8.5,  minDifficulty: 0 },
-    { type: 'enemy', kind: 'config_monster',  x: 16.5, y: 8.5,  minDifficulty: 0 },
-    { type: 'enemy', kind: 'pipeline_demon',  x: 3.5,  y: 11.5, minDifficulty: 0 },
-    { type: 'enemy', kind: 'pipeline_demon',  x: 20.5, y: 11.5, minDifficulty: 0 },
-    { type: 'enemy', kind: 'sql_mutant',      x: 11.5, y: 13.5, minDifficulty: 1 },
-    { type: 'item',  kind: 'weapon_launcher', x: 1.5,  y: 13.5 },
-    { type: 'item',  kind: 'ammo_rockets',    x: 22.5, y: 13.5 },
-    // Boss area (bottom)
-    { type: 'item',  kind: 'health_large',    x: 4.5,  y: 19.5 },
-    { type: 'item',  kind: 'health_large',    x: 19.5, y: 19.5 },
-    { type: 'item',  kind: 'weapon_bfd',      x: 11.5, y: 14.5 },
-    { type: 'item',  kind: 'ammo_rockets',    x: 6.5,  y: 17.5 },
-    { type: 'enemy', kind: 'config_monster',  x: 5.5,  y: 17.5, minDifficulty: 0 },
-    { type: 'enemy', kind: 'sql_mutant',      x: 17.5, y: 17.5, minDifficulty: 0 },
-    { type: 'enemy', kind: 'optimizer_boss',  x: 11.5, y: 21.5, minDifficulty: 0 },
-    { type: 'enemy', kind: 'flow_specter',    x: 7.5,  y: 20.5, minDifficulty: 1 },
-    { type: 'enemy', kind: 'flow_specter',    x: 15.5, y: 20.5, minDifficulty: 1 },
-    { type: 'item',  kind: 'ammo_rockets',    x: 1.5,  y: 21.5 },
-    { type: 'item',  kind: 'ammo_rockets',    x: 22.5, y: 21.5 },
-];
+const SPAWNS_L2 = [];
 
 // ─── L3: Data Mart Layer ──────────────────────────────────────────────────────
 // Star schema hub — central hub room, 4 dimension corridors radiating out
@@ -287,43 +249,17 @@ const MAP_L4 = [
 ];
 
 const SPAWNS_L4 = [
-    // Executive lobby (top)
-    { type: 'item',  kind: 'ammo_bullets',    x: 5.5,  y: 1.5 },
-    { type: 'item',  kind: 'ammo_bullets',    x: 18.5, y: 1.5 },
-    { type: 'item',  kind: 'health_small',    x: 11.5, y: 2.5 },
-    { type: 'enemy', kind: 'data_zombie',     x: 3.5,  y: 3.5,  minDifficulty: 0 },
-    { type: 'enemy', kind: 'data_zombie',     x: 21.5, y: 3.5,  minDifficulty: 0 },
-    { type: 'enemy', kind: 'pipeline_demon',  x: 11.5, y: 4.5,  minDifficulty: 0 },
-    // Conference rooms (mid area)
-    { type: 'item',  kind: 'weapon_shotgun',  x: 2.5,  y: 7.5 },
-    { type: 'item',  kind: 'ammo_shells',     x: 21.5, y: 7.5 },
-    { type: 'item',  kind: 'armor',           x: 11.5, y: 9.5 },
-    { type: 'item',  kind: 'health_small',    x: 1.5,  y: 11.5 },
-    { type: 'enemy', kind: 'config_monster',  x: 8.5,  y: 7.5,  minDifficulty: 0 },
-    { type: 'enemy', kind: 'config_monster',  x: 15.5, y: 7.5,  minDifficulty: 0 },
-    { type: 'enemy', kind: 'sql_mutant',      x: 5.5,  y: 11.5, minDifficulty: 0 },
-    { type: 'enemy', kind: 'sql_mutant',      x: 18.5, y: 11.5, minDifficulty: 0 },
-    { type: 'enemy', kind: 'flow_specter',    x: 11.5, y: 11.5, minDifficulty: 1 },
-    { type: 'enemy', kind: 'config_monster',  x: 2.5,  y: 13.5, minDifficulty: 1 },
-    // War room (lower mid)
-    { type: 'item',  kind: 'weapon_launcher', x: 2.5,  y: 16.5 },
-    { type: 'item',  kind: 'ammo_rockets',    x: 21.5, y: 16.5 },
-    { type: 'item',  kind: 'health_large',    x: 11.5, y: 16.5 },
-    { type: 'enemy', kind: 'sql_mutant',      x: 8.5,  y: 13.5, minDifficulty: 0 },
-    { type: 'enemy', kind: 'sql_mutant',      x: 15.5, y: 13.5, minDifficulty: 0 },
-    { type: 'enemy', kind: 'flow_specter',    x: 4.5,  y: 16.5, minDifficulty: 1 },
-    { type: 'enemy', kind: 'flow_specter',    x: 19.5, y: 16.5, minDifficulty: 1 },
-    // Boardroom (boss arena)
+    // Items scattered around the boardroom
+    { type: 'item',  kind: 'health_small',    x: 5.5,  y: 1.5 },
+    { type: 'item',  kind: 'health_small',    x: 18.5, y: 1.5 },
+    { type: 'item',  kind: 'health_small',    x: 11.5, y: 9.5 },
+    { type: 'item',  kind: 'health_large',    x: 2.5,  y: 11.5 },
+    { type: 'item',  kind: 'health_large',    x: 21.5, y: 11.5 },
+    { type: 'item',  kind: 'armor',           x: 11.5, y: 16.5 },
     { type: 'item',  kind: 'health_large',    x: 4.5,  y: 20.5 },
     { type: 'item',  kind: 'health_large',    x: 19.5, y: 20.5 },
-    { type: 'item',  kind: 'weapon_bfd',      x: 1.5,  y: 21.5 },
-    { type: 'item',  kind: 'ammo_rockets',    x: 22.5, y: 21.5 },
-    { type: 'enemy', kind: 'config_monster',  x: 5.5,  y: 19.5, minDifficulty: 0 },
-    { type: 'enemy', kind: 'config_monster',  x: 18.5, y: 19.5, minDifficulty: 0 },
-    { type: 'enemy', kind: 'stakeholder_boss',x: 11.5, y: 21.5, minDifficulty: 0 },
-    { type: 'enemy', kind: 'flow_specter',    x: 7.5,  y: 21.5, minDifficulty: 1 },
-    { type: 'enemy', kind: 'flow_specter',    x: 15.5, y: 21.5, minDifficulty: 1 },
-    { type: 'enemy', kind: 'sql_mutant',      x: 11.5, y: 19.5, minDifficulty: 2 },
+    // Boss
+    { type: 'enemy', kind: 'stakeholder_boss', x: 11.5, y: 21.5, minDifficulty: 0 },
 ];
 
 // ─── Per-level graffiti ───────────────────────────────────────────────────────
@@ -403,84 +339,70 @@ export const MISSIONS = [
                 'It duplicates everything it touches.',
                 'Stop the replication. At any cost.',
             ],
-            bossName: 'THE EXTRACTOR',
+            bossName: 'GENERIC EXTRACTOR',
             bossDesc: 'Spawns duplicates. Revives fallen enemies.',
         },
     },
     {
         id: 'L1',
-        name: 'Staging Layer',
+        name: 'Trigger Flow',
         map: MAP_L1,
         entitySpawns: SPAWNS_L1,
         playerStart: { x: 1.5, y: 1.5, dirX: 0.83, dirY: 0.55, planeX: 0, planeY: 0.66 },
         extraGraffiti: GRAFFITI_L1,
         completionBonus: 4000,
         briefing: {
-            title: 'L1 — STAGING LAYER',
+            title: 'L1 — TRIGGER FLOW',
             lines: [
-                'The Validator rejects everything. Even valid data.',
-                'Schema changes with every attack.',
-                'Cast your types. Survive validation.',
+                'Something keeps triggering in the staging layer.',
+                'Nobody knows what. Nobody knows when.',
+                'Table update events are feeding it. Shoot them down.',
+                'Direct fire is useless — intercept the events to deal damage.',
             ],
-            bossName: 'THE VALIDATOR',
-            bossDesc: 'Changes attack style at 66% and 33% HP.',
+            bossName: 'on: table_updated',
+            bossDesc: 'Immune to direct fire. Shoot incoming table events to damage it. Each event it receives triggers a barrage.',
         },
     },
     {
         id: 'L2',
-        name: 'Transformation Layer',
+        name: 'Native Types',
         map: MAP_L2,
         entitySpawns: SPAWNS_L2,
-        playerStart: { x: 2.5, y: 2.5, dirX: 0.83, dirY: 0.55, planeX: 0, planeY: 0.66 },
+        mode: 'type_cast',
+        playerStart: { x: 7.5, y: 10, dirX: 0, dirY: -1, planeX: 0.66, planeY: 0 },
         extraGraffiti: GRAFFITI_L2,
         completionBonus: 5000,
         briefing: {
-            title: 'L2 — TRANSFORMATION LAYER',
+            title: 'L2 — NATIVE TYPES',
             lines: [
-                'The Optimizer has run a FULL SCAN on you.',
-                'Each fight phase is a new query plan.',
-                'Survive the SELECT *.',
+                'Records are coming in. Types are wrong. Cast them.',
+                'Your CAST Canon cycles the data type of incoming records.',
+                'Wrong type arrives at a column: TYPE MISMATCH. You die.',
+                'Insert all records with matching types to survive.',
             ],
-            bossName: 'THE OPTIMIZER',
-            bossDesc: 'Changes attack pattern at 75%, 50%, 25% HP. Fires splash projectiles.',
+            bossName: 'TYPE SYSTEM',
+            bossDesc: 'Insert all records with correct types. Shoot records to cycle their data type.',
         },
     },
     {
-        id: 'L3',
-        name: 'Data Mart Layer',
-        map: MAP_L3,
-        entitySpawns: SPAWNS_L3,
-        playerStart: { x: 1.5, y: 1.5, dirX: 0.83, dirY: 0.55, planeX: 0, planeY: 0.66 },
-        extraGraffiti: GRAFFITI_L3,
-        completionBonus: 6000,
-        briefing: {
-            title: 'L3 — DATA MART LAYER',
-            lines: [
-                'The Aggregator controls the entire star schema.',
-                'At 50% HP it splits into fragments.',
-                'Destroy all partial aggregates.',
-            ],
-            bossName: 'THE AGGREGATOR',
-            bossDesc: 'Splits into 2 shards at 50% HP. Kill all shards to win.',
-        },
-    },
-    {
-        id: 'L4',
-        name: 'Consumption Layer',
+        id: 'Final',
+        name: 'Data Mart',
         map: MAP_L4,
         entitySpawns: SPAWNS_L4,
+        mode: 'stakeholder_fight',
         playerStart: { x: 1.5, y: 1.5, dirX: 0.83, dirY: 0.55, planeX: 0, planeY: 0.66 },
         extraGraffiti: GRAFFITI_L4,
-        completionBonus: 8000,
+        completionBonus: 10000,
         briefing: {
-            title: 'L4 — CONSUMPTION LAYER',
+            title: 'FINAL — DATA MART',
             lines: [
-                'The Stakeholder is waiting in the boardroom.',
-                'Every 5 seconds it fires a barrage of urgent reports.',
-                'The budget was approved. You were not.',
+                'The Stakeholder is immune to all weapons.',
+                'It fires business requirements — intercept them with KAI Assistant.',
+                'Each intercepted requirement becomes a Dashboard that fights for you.',
+                'Only Dashboards can deal damage to The Stakeholder.',
             ],
             bossName: 'THE STAKEHOLDER',
-            bossDesc: 'Fires 5-projectile barrages every 5 seconds.',
+            bossDesc: 'Immune to player fire. Convert its requirements into Dashboards using KAI Assistant. Dashboards fight for you.',
         },
     },
 ];

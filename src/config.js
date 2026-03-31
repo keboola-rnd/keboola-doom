@@ -145,6 +145,17 @@ export const WEAPON_DEFS = {
         dropAll: true,               // special flag — kills all alive enemies instantly
         color: '#ff2200',
     },
+    cast_canon: {
+        id: 'cast_canon',
+        name: 'CAST Canon',
+        damage: 0,
+        fireRate: 350,
+        ammoType: null,
+        ammoPerShot: 0,
+        melee: false,
+        hitscanCast: true,
+        color: '#00ddff',
+    },
 };
 
 // Enemy type definitions
@@ -234,7 +245,7 @@ export const ENEMY_TYPES = {
     },
     extractor_boss: {
         id: 'extractor_boss',
-        name: 'The Extractor',
+        name: 'Generic extractor',
         health: 600,
         speed: 0.020,
         damage: 35,
@@ -250,25 +261,26 @@ export const ENEMY_TYPES = {
         bossAbility: 'spawn_duplicates',
         bossReviveCooldown: 8000,
     },
-    validator_boss: {
-        id: 'validator_boss',
-        name: 'The Validator',
-        health: 700,
-        speed: 0.025,
-        damage: 28,
-        attackRange: 10,
-        sightRange: 20,
+    trigger_boss: {
+        id: 'trigger_boss',
+        name: 'on: table_updated',
+        health: 120,
+        speed: 0.008,            // barely moves — lurks in the back
+        damage: 32,
+        attackRange: 20,
+        sightRange: 26,
         spriteIndex: 7,
         score: 4000,
-        attackCooldown: 1600,
+        attackCooldown: 99999,   // never self-attacks — fires only via received events
         isRanged: true,
         isBoss: true,
-        projSpeed: 0.28,
+        projSpeed: 0.26,
         projSplash: 0,
-        bossAbility: 'shapeshift',
-        bossPhases: [0.66, 0.33],
-        bossSpawnOnPhase: 'null_pointer',
-        bossSpawnCount: 3,
+        immuneToDirect: true,    // direct fire does nothing — must intercept table events
+        bossAbility: 'table_events',
+        bossEventInterval: 2000, // ms between new incoming table events
+        bossEventRadius: 9,      // spawn events this far from boss
+        bossEventBarrageCount: 3,// projectiles fired per received event
     },
     optimizer_boss: {
         id: 'optimizer_boss',
@@ -310,20 +322,21 @@ export const ENEMY_TYPES = {
         id: 'stakeholder_boss',
         name: 'The Stakeholder',
         health: 1500,
-        speed: 0.012,
-        damage: 60,
-        attackRange: 18,
+        speed: 0.008,
+        damage: 0,           // does not attack directly — fires business requirements
+        attackRange: 1,
         sightRange: 26,
         spriteIndex: 10,
         score: 8000,
-        attackCooldown: 3000,
-        isRanged: true,
+        attackCooldown: 99999,
+        isRanged: false,
         isBoss: true,
-        projSpeed: 0.30,
-        projSplash: 0,
-        bossAbility: 'scheduled_reports',
-        bossScheduledInterval: 5000,
-        bossReportCount: 5,
+        immuneToAll: true,   // only dashboards can deal damage
+        bossAbility: 'business_requirements',
+        bossReqInterval: 5000,  // ms between requirement barrages
+        bossReqCount: 1,        // requirements per barrage
+        bossReqDamage: 18,      // damage per req that hits player
+        bossReqSpeed: 0.045,    // speed of flying requirements
     },
     null_pointer: {
         id: 'null_pointer',
@@ -379,3 +392,19 @@ export const ITEM_TYPES = {
     weapon_launcher: { id: 'weapon_launcher', name: 'ETL Bazooka',    weaponId: 'pipeline_launcher', ammoType: 'rockets', ammoBonus: 5,  spriteIndex: 11 },
     weapon_bfd:      { id: 'weapon_bfd',      name: 'BFD 9000',       weaponId: 'bfd_9000',         ammoType: 'energy',  ammoBonus: 40, spriteIndex: 12 },
 };
+
+// L2 Type Cast mechanic constants
+export const L2_DATA_TYPES = ['INT', 'VARCHAR', 'BOOLEAN', 'FLOAT', 'DATE'];
+export const L2_COLUMN_DEFS = [
+    { name: 'id',         type: 'INT'     },
+    { name: 'name',       type: 'VARCHAR' },
+    { name: 'active',     type: 'BOOLEAN' },
+    { name: 'salary',     type: 'FLOAT'   },
+    { name: 'created_at', type: 'DATE'    },
+];
+export const L2_RECORDS_BY_DIFFICULTY = [5, 10, 15];
+export const L2_RECORD_SPEED    = 0.0009;
+export const L2_SPAWN_INTERVALS = [6000, 4000, 3000];
+export const L2_MAX_CONCURRENT  = [2, 2, 3];
+export const L2_COLUMN_HIT_R2   = 0.64;
+export const L2_CAST_HIT_R2     = 0.36;
