@@ -32,8 +32,8 @@ const C = {
 };
 
 // Weapon order for arms grid (skip fist=1)
-const ARMS_ORDER  = ['sql_gun', 'data_shotgun', 'pipeline_launcher', 'bfd_9000', 'kai_assistant', 'drop_all_tables'];
-const ARMS_LABELS = ['2', '3', '4', '5', '6', '7'];
+const ARMS_ORDER  = ['chainsaw', 'sql_gun', 'data_shotgun', 'super_shotgun', 'chaingun', 'pipeline_launcher', 'plasma_rifle', 'kai_assistant', 'drop_all_tables'];
+const ARMS_LABELS = ['2', '3', '4', '5', '6', '7', '8', '9', '0'];
 
 const AMMO_ROWS = [
     { key: 'bullets', label: 'SQLS' },   // SQL queries
@@ -182,12 +182,12 @@ export class HUD {
     // ── ARMS grid (weapons owned) ─────────────────────────────────────────────
 
     _drawArms(ctx, x, y, h, player, faceX) {
-        const w = 84;
+        const w = 108;
         this._panel(ctx, x, y, w, h);
 
         ctx.font = 'bold 14px Courier New';
-        const cols = 2;
-        const cw = 36, rh = 24;   // 3 rows × 24px = 72, fits within BAR_H=90
+        const cols = 3;
+        const cw = 30, rh = 24;   // 3 rows × 24px = 72, fits within BAR_H=90
         const ox = x + 8, oy = y + 12;
 
         for (let i = 0; i < ARMS_ORDER.length; i++) {
@@ -512,9 +512,13 @@ export class HUD {
 
         const COLORS = {
             fist:              '#d49060',
+            chainsaw:          '#ff8800',
             sql_gun:           '#aaaaaa',
             data_shotgun:      '#cc8844',
+            super_shotgun:     '#ff6600',
+            chaingun:          '#88aacc',
             pipeline_launcher: '#44cc44',
+            plasma_rifle:      '#00ffaa',
             bfd_9000:          '#44ffff',
             kai_assistant:     '#ff44ff',
             cast_canon:        '#00ddff',
@@ -523,9 +527,13 @@ export class HUD {
 
         switch (player.activeWeapon) {
             case 'fist':              this._wFist(ctx, fireKick, color);    break;
+            case 'chainsaw':          this._wChainsaw(ctx, fireKick, color);      break;
             case 'sql_gun':           this._wPistol(ctx, color);            break;
             case 'data_shotgun':      this._wShotgun(ctx, color);           break;
+            case 'super_shotgun':     this._wSuperShotgun(ctx, color);            break;
+            case 'chaingun':          this._wChaingun(ctx, color);                break;
             case 'pipeline_launcher': this._wLauncher(ctx, color);          break;
+            case 'plasma_rifle':      this._wPlasmaRifle(ctx, color);             break;
             case 'bfd_9000':          this._wBFD(ctx, color);               break;
             case 'kai_assistant':     this._wKAI(ctx, color);               break;
             case 'cast_canon':        this._wCastCanon(ctx, fireKick, color); break;
@@ -719,6 +727,134 @@ export class HUD {
         ctx.textAlign = 'center';
         ctx.fillText('CAST', 0, 14 + oy);
         ctx.textAlign = 'left';
+    }
+
+    _wChainsaw(ctx, kick, color) {
+        const oy = kick * -10;
+        // Main body bar
+        ctx.fillStyle = '#442200';
+        ctx.fillRect(-12, -20 + oy, 24, 70);
+        // Chain guide bar (horizontal)
+        ctx.fillStyle = '#333';
+        ctx.fillRect(-8, -60 + oy, 16, 44);
+        ctx.fillStyle = '#555';
+        ctx.fillRect(-6, -58 + oy, 12, 40);
+        // Chain teeth
+        ctx.fillStyle = '#aaa';
+        for (let i = 0; i < 7; i++) {
+            ctx.fillRect(-10, -55 + oy + i * 6, 4, 4);
+            ctx.fillRect(6,   -55 + oy + i * 6, 4, 4);
+        }
+        // Engine / motor block
+        ctx.fillStyle = color;
+        ctx.fillRect(-16, -5 + oy, 32, 22);
+        // Exhaust vents
+        ctx.fillStyle = '#221100';
+        for (let i = 0; i < 3; i++) ctx.fillRect(-12, -2 + oy + i * 7, 24, 4);
+        // Handle
+        ctx.fillStyle = '#331100';
+        ctx.fillRect(-10, 16 + oy, 20, 40);
+        // Trigger
+        ctx.fillStyle = '#553300';
+        ctx.fillRect(4, 28 + oy, 12, 10);
+    }
+
+    _wSuperShotgun(ctx, color) {
+        // Two barrels side by side (centered)
+        ctx.fillStyle = '#333';
+        ctx.fillRect(-14, -60, 12, 60);
+        ctx.fillRect(2,   -60, 12, 60);
+        // Barrel shine
+        ctx.fillStyle = '#555';
+        ctx.fillRect(-12, -58, 8, 54);
+        ctx.fillRect(4,   -58, 8, 54);
+        // Barrel muzzles
+        ctx.fillStyle = '#222';
+        ctx.fillRect(-14, -62, 12, 4);
+        ctx.fillRect(2,   -62, 12, 4);
+        // Pump / fore-end (wider than single shotgun)
+        ctx.fillStyle = '#666';
+        ctx.fillRect(-20, -38, 40, 12);
+        // Receiver
+        ctx.fillStyle = '#445544';
+        ctx.fillRect(-26, -26, 52, 20);
+        // Stock
+        ctx.fillStyle = color;
+        ctx.fillRect(-22,  -8, 44, 50);
+        // Barrel rings
+        ctx.fillStyle = '#888';
+        ctx.fillRect(-15, -48, 26, 4);
+    }
+
+    _wChaingun(ctx, color) {
+        // 3 rotating barrels hint (draw 3 barrel circles)
+        const spin = (Date.now() * 0.005) % (Math.PI * 2);
+        for (let i = 0; i < 3; i++) {
+            const a = spin + (i * Math.PI * 2) / 3;
+            const bx = Math.cos(a) * 8;
+            const by = Math.sin(a) * 4;
+            ctx.fillStyle = '#444';
+            ctx.fillRect(bx - 5, -55 + by, 10, 50);
+            ctx.fillStyle = '#666';
+            ctx.fillRect(bx - 3, -53 + by, 6, 46);
+        }
+        // Central drum/housing
+        ctx.fillStyle = '#334455';
+        ctx.beginPath();
+        ctx.ellipse(0, -12, 16, 16, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = color;
+        ctx.beginPath();
+        ctx.ellipse(0, -12, 10, 10, 0, 0, Math.PI * 2);
+        ctx.fill();
+        // Body
+        ctx.fillStyle = '#2a3a4a';
+        ctx.fillRect(-20, 0, 40, 40);
+        // Grip
+        ctx.fillStyle = '#1a2a3a';
+        ctx.fillRect(-8, 36, 16, 32);
+        // Ammo belt suggestion
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(-20, 15);
+        ctx.lineTo(-32, 40);
+        ctx.stroke();
+    }
+
+    _wPlasmaRifle(ctx, color) {
+        // Energy cell glow
+        const pulse = (Math.sin(Date.now() * 0.008) + 1) * 0.5;
+        ctx.fillStyle = `rgba(0,255,170,${0.3 + pulse * 0.4})`;
+        ctx.beginPath();
+        ctx.ellipse(0, -20, 10 + pulse * 4, 10 + pulse * 4, 0, 0, Math.PI * 2);
+        ctx.fill();
+        // Barrel
+        ctx.fillStyle = '#1a2a1a';
+        ctx.fillRect(-6, -65, 12, 65);
+        ctx.fillStyle = '#2a3a2a';
+        ctx.fillRect(-4, -63, 8, 61);
+        // Body
+        ctx.fillStyle = '#1a3a2a';
+        ctx.fillRect(-18, -10, 36, 40);
+        // Energy cell (glowing rectangular module)
+        ctx.fillStyle = color;
+        ctx.fillRect(-14, -6, 12, 20);
+        ctx.fillStyle = `rgba(0,255,170,${0.6 + pulse * 0.4})`;
+        ctx.fillRect(-12, -4, 8, 16);
+        // Vents on right side
+        ctx.fillStyle = '#113322';
+        for (let i = 0; i < 3; i++) ctx.fillRect(6, -4 + i * 9, 10, 6);
+        // Sight rail
+        ctx.fillStyle = '#0a1a0a';
+        ctx.fillRect(-4, -20, 8, 12);
+        // Grip
+        ctx.fillStyle = '#112211';
+        ctx.fillRect(-8, 28, 16, 36);
+        // Grip accent
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 1;
+        ctx.strokeRect(-18, -10, 36, 40);
     }
 
     // ── Screen overlays ───────────────────────────────────────────────────────

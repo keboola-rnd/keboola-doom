@@ -605,6 +605,23 @@ export class AudioManager {
                 this._tone(1200, 0.4, 0.5, 'square');
                 this._tone(300, 0.5, 0.4, 'sawtooth');
                 break;
+            case 'chainsaw':
+                this._noise(0.2, 60, 3, 0.8, 'sawtooth');
+                this._tone(120, 0.15, 0.1, 'sawtooth');
+                break;
+            case 'super_shotgun':
+                this._noise(0.35, 100, 4, 0.8, 'sawtooth');
+                this._tone(180, 0.2, 0.35, 'sawtooth');
+                setTimeout(() => this._noise(0.25, 90, 4, 0.6, 'sawtooth'), 60);
+                break;
+            case 'chaingun':
+                this._noise(0.1, 400, 15, 0.4);
+                this._tone(600, 0.04, 0.12, 'square');
+                break;
+            case 'plasma_rifle':
+                this._tone(900, 0.08, 0.18, 'sine');
+                this._tone(1400, 0.05, 0.12, 'square');
+                break;
             case 'enemy_alert':
                 this._tone(440, 0.1, 0.15, 'sawtooth');
                 setTimeout(() => this._tone(520, 0.1, 0.15, 'sawtooth'), 120);

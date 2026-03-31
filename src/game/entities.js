@@ -33,6 +33,12 @@ const ITEM_COLORS = {
     weapon_shotgun:  [0.9, 0.5, 0.2],
     weapon_launcher: [0.2, 0.9, 0.2],
     weapon_bfd:      [0.0, 0.9, 0.9],
+    weapon_kai:           [0.9, 0.2, 0.9],
+    weapon_chainsaw:      [1.0, 0.5, 0.0],
+    weapon_super_shotgun: [1.0, 0.4, 0.0],
+    weapon_chaingun:      [0.5, 0.7, 0.9],
+    weapon_plasma:        [0.0, 1.0, 0.6],
+    ammo_energy:          [0.0, 0.8, 0.5],
 };
 
 // Table names from tables.csv — fetched once, assigned randomly to each enemy
@@ -1631,6 +1637,90 @@ function _drawItemIcon(ctx, kind, sz) {
             ctx.closePath(); ctx.fill();
             ctx.fillStyle = '#00ffff'; ctx.font = 'bold 9px monospace'; ctx.textAlign = 'center';
             ctx.fillText('BFD 9000', cx, sz - 4);
+            break;
+        }
+
+        case 'weapon_chainsaw': {
+            _iconBg(ctx, cx, cy, sz * 0.46, '#1a0800');
+            // Chain bar
+            ctx.fillStyle = '#555';
+            ctx.fillRect(cx - 22, cy - 4, 34, 8);
+            ctx.fillStyle = '#888';
+            for (let i = 0; i < 5; i++) {
+                ctx.fillRect(cx - 18 + i * 7, cy - 8, 5, 5);
+                ctx.fillRect(cx - 18 + i * 7, cy + 3, 5, 5);
+            }
+            // Motor body
+            ctx.fillStyle = '#ff8800';
+            ctx.beginPath(); ctx.roundRect(cx - 6, cy - 12, 18, 24, 3); ctx.fill();
+            ctx.fillStyle = '#cc5500';
+            ctx.beginPath(); ctx.roundRect(cx - 4, cy - 10, 14, 6, 2); ctx.fill();
+            ctx.fillStyle = '#ff8800'; ctx.font = 'bold 8px monospace'; ctx.textAlign = 'center';
+            ctx.fillText('KILL JOB', cx, sz - 4);
+            break;
+        }
+        case 'weapon_super_shotgun': {
+            _iconBg(ctx, cx, cy, sz * 0.46, '#1a0800');
+            // Two barrels
+            ctx.fillStyle = '#cc6600';
+            ctx.fillRect(cx - 14, cy - 24, 10, 36); ctx.fillRect(cx + 2, cy - 24, 10, 36);
+            ctx.fillStyle = '#884400';
+            ctx.fillRect(cx - 14, cy - 28, 10, 6); ctx.fillRect(cx + 2, cy - 28, 10, 6);
+            // Stock
+            ctx.fillStyle = '#774422';
+            ctx.beginPath(); ctx.roundRect(cx - 18, cy + 10, 36, 12, 3); ctx.fill();
+            ctx.fillStyle = '#ff6600'; ctx.font = 'bold 8px monospace'; ctx.textAlign = 'center';
+            ctx.fillText('COND FLOW', cx, sz - 4);
+            break;
+        }
+        case 'weapon_chaingun': {
+            _iconBg(ctx, cx, cy, sz * 0.46, '#0a1520');
+            // Three barrels
+            ctx.fillStyle = '#446688';
+            ctx.fillRect(cx - 18, cy - 24, 8, 32); ctx.fillRect(cx - 5, cy - 24, 8, 32); ctx.fillRect(cx + 8, cy - 24, 8, 32);
+            // Drum
+            ctx.fillStyle = '#88aacc';
+            ctx.beginPath(); ctx.arc(cx - 1, cy - 10, 10, 0, Math.PI * 2); ctx.fill();
+            ctx.fillStyle = '#334455';
+            ctx.beginPath(); ctx.arc(cx - 1, cy - 10, 5, 0, Math.PI * 2); ctx.fill();
+            ctx.fillStyle = '#88aacc'; ctx.font = 'bold 8px monospace'; ctx.textAlign = 'center';
+            ctx.fillText('WEBHOOK', cx, sz - 4);
+            break;
+        }
+        case 'weapon_plasma': {
+            _iconBg(ctx, cx, cy, sz * 0.46, '#001a10');
+            // Barrel
+            ctx.fillStyle = '#1a3a2a';
+            ctx.fillRect(cx - 6, cy - 28, 12, 36);
+            // Energy cell glow
+            ctx.fillStyle = '#00ffaa';
+            ctx.beginPath(); ctx.arc(cx, cy - 10, 10, 0, Math.PI * 2); ctx.fill();
+            ctx.fillStyle = 'rgba(0,255,170,0.5)';
+            ctx.beginPath(); ctx.arc(cx, cy - 10, 16, 0, Math.PI * 2); ctx.fill();
+            // Bolt
+            ctx.fillStyle = '#ffffff';
+            ctx.beginPath();
+            ctx.moveTo(cx + 2, cy - 18); ctx.lineTo(cx - 4, cy - 8); ctx.lineTo(cx, cy - 8);
+            ctx.lineTo(cx - 2, cy - 2); ctx.lineTo(cx + 6, cy - 12); ctx.lineTo(cx + 2, cy - 12);
+            ctx.closePath(); ctx.fill();
+            ctx.fillStyle = '#00ffaa'; ctx.font = 'bold 8px monospace'; ctx.textAlign = 'center';
+            ctx.fillText('STREAM', cx, sz - 4);
+            break;
+        }
+        case 'ammo_energy': {
+            _iconBg(ctx, cx, cy, sz * 0.46, '#001510');
+            // Energy crystal
+            ctx.fillStyle = '#00cc88';
+            ctx.beginPath();
+            ctx.moveTo(cx, cy - 22); ctx.lineTo(cx + 12, cy - 5); ctx.lineTo(cx + 8, cy + 14);
+            ctx.lineTo(cx - 8, cy + 14); ctx.lineTo(cx - 12, cy - 5);
+            ctx.closePath(); ctx.fill();
+            ctx.fillStyle = 'rgba(0,255,170,0.5)';
+            ctx.beginPath();
+            ctx.moveTo(cx, cy - 18); ctx.lineTo(cx + 8, cy - 4); ctx.lineTo(cx - 8, cy - 4);
+            ctx.closePath(); ctx.fill();
+            ctx.fillStyle = '#00ffaa'; ctx.font = 'bold 8px monospace'; ctx.textAlign = 'center';
+            ctx.fillText('CREDITS', cx, sz - 4);
             break;
         }
 

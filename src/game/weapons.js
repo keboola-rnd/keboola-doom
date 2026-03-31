@@ -4,7 +4,7 @@ import { WEAPON_DEFS } from '../config.js';
 
 const ANIM = { IDLE: 0, FIRE: 1, LOWER: 2, RAISE: 3 };
 
-const WEAPON_ORDER = ['fist', 'sql_gun', 'data_shotgun', 'pipeline_launcher', 'bfd_9000', 'kai_assistant', 'drop_all_tables'];
+const WEAPON_ORDER = ['fist', 'chainsaw', 'sql_gun', 'data_shotgun', 'super_shotgun', 'chaingun', 'pipeline_launcher', 'plasma_rifle', 'kai_assistant', 'drop_all_tables'];
 
 export class WeaponSystem {
     constructor(audio) {
@@ -22,7 +22,7 @@ export class WeaponSystem {
         const def = WEAPON_DEFS[player.activeWeapon];
 
         // ── Weapon switch: keys 1-5 ───────────────────────────────────────────
-        const keyMap = ['Digit1', 'Digit2', 'Digit3', 'Digit4', 'Digit5', 'Digit6', 'Digit7'];
+        const keyMap = ['Digit1', 'Digit2', 'Digit3', 'Digit4', 'Digit5', 'Digit6', 'Digit7', 'Digit8', 'Digit9', 'Digit0'];
         for (let i = 0; i < keyMap.length; i++) {
             if (input.isDown(keyMap[i]) && player.hasWeapon(WEAPON_ORDER[i])) {
                 this._requestSwitch(player, WEAPON_ORDER[i]);

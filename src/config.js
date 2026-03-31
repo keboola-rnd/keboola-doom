@@ -55,7 +55,7 @@ export const MINIMAP_MARGIN = 10;
 export const WEAPON_DEFS = {
     fist: {
         id: 'fist',
-        name: 'CTRL+Z',           // the last resort — punch it and hope for undo
+        name: 'SELECT 1',         // the last resort — punch it and hope for undo
         damage: 25,
         fireRate: 500,
         ammoType: null,
@@ -64,9 +64,20 @@ export const WEAPON_DEFS = {
         meleeRange: 1.5,
         color: '#e8a060',
     },
+    chainsaw: {
+        id: 'chainsaw',
+        name: 'Kill Job',         // instantly terminates running jobs — no confirmation dialog
+        damage: 40,
+        fireRate: 280,
+        ammoType: null,
+        ammoPerShot: 0,
+        melee: true,
+        meleeRange: 1.3,
+        color: '#ff8800',
+    },
     sql_gun: {
         id: 'sql_gun',
-        name: 'SELECT * Gun',     // fires SELECT statements at high velocity
+        name: 'Run Single Row',   // fires SELECT statements at high velocity
         damage: 18,
         fireRate: 650,
         ammoType: 'bullets',
@@ -79,7 +90,7 @@ export const WEAPON_DEFS = {
     },
     data_shotgun: {
         id: 'data_shotgun',
-        name: 'Scatter Query',    // 7 pellets = 7 table scans at once
+        name: 'Parallel Jobs',    // 7 pellets = 7 jobs fired at once
         damage: 14,   // per pellet
         pellets: 7,
         spread: 0.12,
@@ -91,6 +102,31 @@ export const WEAPON_DEFS = {
         projSpeed: 0.50,    // fast API calls
         projSprite: 14,
         color: '#cc8844',
+    },
+    super_shotgun: {
+        id: 'super_shotgun',
+        name: 'Conditional Flow', // branches into 14 parallel paths at once
+        damage: 10,               // per pellet
+        pellets: 14,
+        spread: 0.22,
+        fireRate: 1100,
+        ammoType: 'shells',
+        ammoPerShot: 2,
+        melee: false,
+        projectile: true,
+        projSpeed: 0.50,
+        projSprite: 14,
+        color: '#ff6600',
+    },
+    chaingun: {
+        id: 'chaingun',
+        name: 'Webhook',          // fires on every event, no rate limiting
+        damage: 12,
+        fireRate: 100,
+        ammoType: 'bullets',
+        ammoPerShot: 1,
+        melee: false,
+        color: '#88aacc',
     },
     pipeline_launcher: {
         id: 'pipeline_launcher',
@@ -105,6 +141,19 @@ export const WEAPON_DEFS = {
         projSpeed: 0.22,    // slower batch job
         projSprite: 15,
         color: '#44cc44',
+    },
+    plasma_rifle: {
+        id: 'plasma_rifle',
+        name: 'Data Stream',      // continuous real-time fire — CDC at maximum throughput
+        damage: 22,
+        fireRate: 175,
+        ammoType: 'energy',
+        ammoPerShot: 1,
+        melee: false,
+        projectile: true,
+        projSpeed: 0.55,
+        projSprite: 16,
+        color: '#00ffaa',
     },
     bfd_9000: {
         id: 'bfd_9000',
@@ -389,9 +438,14 @@ export const ITEM_TYPES = {
     ammo_shells:  { id: 'ammo_shells',  name: 'API Calls',         ammoType: 'shells',  amount: 8,  spriteIndex: 7 },
     ammo_rockets: { id: 'ammo_rockets', name: 'Batch Jobs',        ammoType: 'rockets', amount: 5,  spriteIndex: 8 },
     armor:        { id: 'armor',        name: 'SLA Guarantee',     armor: 25, spriteIndex: 9 },   // 99.9% uptime, guaranteed
-    weapon_shotgun:  { id: 'weapon_shotgun',  name: 'Scatter Query',  weaponId: 'data_shotgun',     ammoType: 'shells',  ammoBonus: 10, spriteIndex: 10 },
-    weapon_launcher: { id: 'weapon_launcher', name: 'ETL Bazooka',    weaponId: 'pipeline_launcher', ammoType: 'rockets', ammoBonus: 5,  spriteIndex: 11 },
-    weapon_bfd:      { id: 'weapon_bfd',      name: 'BFD 9000',       weaponId: 'bfd_9000',         ammoType: 'energy',  ammoBonus: 40, spriteIndex: 12 },
+    weapon_shotgun:       { id: 'weapon_shotgun',       name: 'Parallel Jobs',    weaponId: 'data_shotgun',      ammoType: 'shells',  ammoBonus: 10, spriteIndex: 10 },
+    weapon_launcher:      { id: 'weapon_launcher',      name: 'ETL Bazooka',      weaponId: 'pipeline_launcher', ammoType: 'rockets', ammoBonus: 5,  spriteIndex: 11 },
+    weapon_kai:           { id: 'weapon_kai',           name: 'KAI Assistant',    weaponId: 'kai_assistant',     ammoType: 'tokens',  ammoBonus: 10, spriteIndex: 12 },
+    weapon_chainsaw:      { id: 'weapon_chainsaw',      name: 'Kill Job',         weaponId: 'chainsaw',          ammoType: null,      ammoBonus: 0,  spriteIndex: 18 },
+    weapon_super_shotgun: { id: 'weapon_super_shotgun', name: 'Conditional Flow', weaponId: 'super_shotgun',     ammoType: 'shells',  ammoBonus: 4,  spriteIndex: 19 },
+    weapon_chaingun:      { id: 'weapon_chaingun',      name: 'Webhook',          weaponId: 'chaingun',          ammoType: 'bullets', ammoBonus: 40, spriteIndex: 20 },
+    weapon_plasma:        { id: 'weapon_plasma',        name: 'Data Stream',      weaponId: 'plasma_rifle',      ammoType: 'energy',  ammoBonus: 40, spriteIndex: 21 },
+    ammo_energy:          { id: 'ammo_energy',          name: 'Snowflake Credits', ammoType: 'energy',            amount: 40,          spriteIndex: 22 },
 };
 
 // L2 Type Cast mechanic constants
