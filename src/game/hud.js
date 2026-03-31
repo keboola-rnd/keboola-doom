@@ -519,7 +519,6 @@ export class HUD {
             chaingun:          '#88aacc',
             pipeline_launcher: '#44cc44',
             plasma_rifle:      '#00ffaa',
-            bfd_9000:          '#44ffff',
             kai_assistant:     '#ff44ff',
             cast_canon:        '#00ddff',
         };
@@ -534,7 +533,6 @@ export class HUD {
             case 'chaingun':          this._wChaingun(ctx, color);                break;
             case 'pipeline_launcher': this._wLauncher(ctx, color);          break;
             case 'plasma_rifle':      this._wPlasmaRifle(ctx, color);             break;
-            case 'bfd_9000':          this._wBFD(ctx, color);               break;
             case 'kai_assistant':     this._wKAI(ctx, color);               break;
             case 'cast_canon':        this._wCastCanon(ctx, fireKick, color); break;
         }

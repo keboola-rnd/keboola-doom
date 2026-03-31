@@ -492,7 +492,7 @@ class Game {
 
         if (mission.mode === 'stakeholder_fight') {
             // Give all offensive weapons + unlimited KAI tokens; KAI active by default
-            ['sql_gun', 'data_shotgun', 'pipeline_launcher', 'bfd_9000', 'kai_assistant', 'drop_all_tables']
+            ['sql_gun', 'data_shotgun', 'super_shotgun', 'chaingun', 'pipeline_launcher', 'plasma_rifle', 'kai_assistant', 'drop_all_tables']
                 .forEach(w => this._player.giveWeapon(w));
             this._player.activeWeapon = 'kai_assistant';
             this._player.ammo.tokens = MAX_AMMO.tokens;

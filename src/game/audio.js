@@ -600,11 +600,6 @@ export class AudioManager {
                 this._tone(400, 0.2, 0.4, 'sawtooth');
                 this._tone(150, 0.3, 0.3, 'sine');
                 break;
-            case 'bfd_9000':
-                this._noise(0.5, 60, 2, 0.9);
-                this._tone(1200, 0.4, 0.5, 'square');
-                this._tone(300, 0.5, 0.4, 'sawtooth');
-                break;
             case 'chainsaw':
                 this._noise(0.2, 60, 3, 0.8, 'sawtooth');
                 this._tone(120, 0.15, 0.1, 'sawtooth');

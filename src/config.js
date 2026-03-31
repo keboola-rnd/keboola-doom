@@ -155,20 +155,6 @@ export const WEAPON_DEFS = {
         projSprite: 16,
         color: '#00ffaa',
     },
-    bfd_9000: {
-        id: 'bfd_9000',
-        name: 'BFD 9000',         // Big Full-scan DataFrame — burns Snowflake credits fast
-        damage: 250,
-        splashRadius: 6,
-        fireRate: 2800,
-        ammoType: 'energy',
-        ammoPerShot: 40,          // 40 credits per shot
-        melee: false,
-        projectile: true,
-        projSpeed: 0.10,    // very slow orb, like full table scan on 10TB
-        projSprite: 16,
-        color: '#44ffff',
-    },
     kai_assistant: {
         id: 'kai_assistant',
         name: 'KAI Assistant',    // asks a clarifying question, then one-shots everything
