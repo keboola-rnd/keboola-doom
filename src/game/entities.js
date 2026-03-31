@@ -12,6 +12,14 @@ const ENEMY_COLORS = {
     server_boss:     [1.0, 0.1, 0.1],
     flow_specter:    [0.65, 0.2, 1.0],  // violet/purple
     sql_mutant:      [1.0,  0.72, 0.0], // amber
+    extractor_boss:     [1.0, 0.3, 0.1],   // orange-red
+    validator_boss:     [1.0, 1.0, 0.0],   // yellow
+    optimizer_boss:     [0.0, 0.9, 0.3],   // bright green
+    aggregator_boss:    [0.1, 0.5, 1.0],   // bright blue
+    stakeholder_boss:   [1.0, 0.8, 0.0],   // gold
+    null_pointer:       [1.0, 0.0, 1.0],   // magenta
+    aggregator_shard:   [0.1, 0.4, 0.9],   // medium blue
+    urgent_ticket:      [0.0, 0.7, 1.0],   // Jira blue
 };
 
 const ITEM_COLORS = {
@@ -257,6 +265,255 @@ function _drawSqlSprite(ctx, body, acc) {
 // Item effect hint shown on the floating label
 const AMMO_SHORT = { bullets: 'SQLS', shells: 'APIC', rockets: 'BTCH', energy: 'CRDT' };
 
+// ─── Boss-specific sprite drawing functions ───────────────────────────────────
+
+function _drawExtractorSprite(ctx, body, acc) {
+    // Two overlapping DB tables — represents data duplication
+    ctx.fillStyle = '#0a0a18';
+    ctx.fillRect(2, 4, 54, 56);
+    // Background table (offset)
+    ctx.fillStyle = body;
+    ctx.globalAlpha = 0.7;
+    ctx.fillRect(6, 8, 52, 12);
+    ctx.globalAlpha = 1.0;
+    ctx.strokeStyle = acc;
+    ctx.lineWidth = 1;
+    ctx.strokeRect(6, 8, 52, 50);
+    // Foreground table
+    ctx.fillStyle = body;
+    ctx.fillRect(2, 4, 52, 12);
+    ctx.strokeStyle = acc;
+    ctx.lineWidth = 1.5;
+    ctx.strokeRect(2, 4, 52, 50);
+    // Table rows with duplicate markers
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 4px monospace';
+    ctx.textAlign = 'left';
+    for (let r = 0; r < 4; r++) {
+        const y = 20 + r * 9;
+        ctx.fillStyle = r % 2 === 0 ? '#0f0f20' : '#161628';
+        ctx.fillRect(3, y, 50, 8);
+        ctx.fillStyle = acc;
+        ctx.fillText(`COPY_${r+1}`, 5, y + 6);
+        // Duplicate badge
+        ctx.fillStyle = '#ff4400';
+        ctx.fillText('DUP', 42, y + 6);
+    }
+    ctx.fillStyle = '#ff4400';
+    ctx.font = 'bold 5px monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText('EXTRACTOR', 32, 58);
+}
+
+function _drawValidatorSprite(ctx, body, acc, phase) {
+    // Checklist with some items crossed out (validation failures)
+    ctx.fillStyle = '#0a180a';
+    ctx.fillRect(4, 4, 56, 56);
+    ctx.strokeStyle = acc;
+    ctx.lineWidth = 1.5;
+    ctx.strokeRect(4, 4, 56, 56);
+    // Title
+    ctx.fillStyle = body;
+    ctx.fillRect(4, 4, 56, 10);
+    ctx.fillStyle = '#000';
+    ctx.font = 'bold 5px monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText('VALIDATE', 32, 11);
+    // Checklist items — some pass, some fail based on phase
+    const items = ['type_check', 'not_null', 'uniqueness', 'range_val', 'ref_integ'];
+    const failed = phase > 0 ? [1, 3] : phase > 1 ? [0, 1, 3, 4] : [];
+    items.forEach((item, i) => {
+        const y = 20 + i * 9;
+        const isFail = failed.includes(i);
+        ctx.fillStyle = isFail ? '#550000' : '#003300';
+        ctx.fillRect(5, y, 54, 8);
+        ctx.fillStyle = isFail ? '#ff4444' : '#44ff44';
+        ctx.font = 'bold 3.5px monospace';
+        ctx.textAlign = 'left';
+        ctx.fillText(isFail ? '✗' : '✓', 7, y + 6);
+        ctx.fillText(item.substring(0, 10), 14, y + 6);
+    });
+    ctx.fillStyle = acc;
+    ctx.font = 'bold 4px monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText(`PHASE ${phase+1}`, 32, 60);
+}
+
+function _drawOptimizerSprite(ctx, body, acc) {
+    // EXPLAIN PLAN — cascading query steps
+    ctx.fillStyle = '#0d1117';
+    ctx.fillRect(4, 2, 56, 60);
+    ctx.fillStyle = acc;
+    ctx.fillRect(4, 2, 56, 9);
+    ctx.fillStyle = '#000';
+    ctx.font = 'bold 4px monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText('EXPLAIN PLAN', 32, 8);
+    // Plan steps cascading
+    const steps = ['FULL SCAN', '↓ FILTER', '↓ HASH JOIN', '↓ SORT', '↓ LIMIT 0'];
+    steps.forEach((step, i) => {
+        const indent = i * 4;
+        const y = 16 + i * 10;
+        ctx.fillStyle = i === 0 ? '#550000' : i < 3 ? '#332200' : '#001133';
+        ctx.fillRect(4 + indent, y, 56 - indent, 8);
+        ctx.strokeStyle = acc;
+        ctx.lineWidth = 0.5;
+        ctx.strokeRect(4 + indent, y, 56 - indent, 8);
+        ctx.fillStyle = i === 0 ? '#ff6666' : '#aaaaff';
+        ctx.font = `bold ${i === 0 ? 4.5 : 4}px monospace`;
+        ctx.textAlign = 'left';
+        ctx.fillText(step, 6 + indent, y + 6);
+    });
+}
+
+function _drawAggregatorSprite(ctx, body, acc) {
+    // 3D cube / CUBE() symbol
+    ctx.fillStyle = '#0a0a22';
+    ctx.fillRect(4, 4, 56, 56);
+    // Top face
+    ctx.fillStyle = body;
+    ctx.beginPath();
+    ctx.moveTo(32, 10); ctx.lineTo(54, 20); ctx.lineTo(32, 30); ctx.lineTo(10, 20);
+    ctx.closePath(); ctx.fill();
+    ctx.strokeStyle = acc; ctx.lineWidth = 1.5; ctx.stroke();
+    // Left face
+    ctx.fillStyle = `rgba(${parseInt(body.slice(4))},0.65)`;
+    ctx.beginPath();
+    ctx.moveTo(10, 20); ctx.lineTo(32, 30); ctx.lineTo(32, 52); ctx.lineTo(10, 42);
+    ctx.closePath(); ctx.fill(); ctx.stroke();
+    // Right face
+    ctx.fillStyle = `rgba(${parseInt(body.slice(4))},0.85)`;
+    ctx.beginPath();
+    ctx.moveTo(54, 20); ctx.lineTo(32, 30); ctx.lineTo(32, 52); ctx.lineTo(54, 42);
+    ctx.closePath(); ctx.fill(); ctx.stroke();
+    // CUBE label
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 5px monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText('CUBE()', 32, 62);
+}
+
+function _drawAggregatorShardSprite(ctx, body, acc) {
+    // Small cube fragment
+    ctx.fillStyle = '#0a0a22';
+    ctx.fillRect(8, 8, 48, 48);
+    // Simplified cube
+    ctx.fillStyle = body;
+    ctx.beginPath();
+    ctx.moveTo(32, 16); ctx.lineTo(48, 24); ctx.lineTo(32, 32); ctx.lineTo(16, 24);
+    ctx.closePath(); ctx.fill();
+    ctx.strokeStyle = acc; ctx.lineWidth = 1.5; ctx.stroke();
+    ctx.fillStyle = body;
+    ctx.beginPath();
+    ctx.moveTo(16, 24); ctx.lineTo(32, 32); ctx.lineTo(32, 48); ctx.lineTo(16, 40);
+    ctx.closePath(); ctx.fill(); ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(48, 24); ctx.lineTo(32, 32); ctx.lineTo(32, 48); ctx.lineTo(48, 40);
+    ctx.closePath(); ctx.fill(); ctx.stroke();
+    // Crack lines
+    ctx.strokeStyle = '#ff4444'; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(24, 20); ctx.lineTo(20, 30); ctx.lineTo(28, 26); ctx.stroke();
+    ctx.fillStyle = acc;
+    ctx.font = 'bold 4px monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText('PARTIAL', 32, 62);
+}
+
+function _drawStakeholderSprite(ctx, body, acc) {
+    // Presentation slide with urgent graph
+    ctx.fillStyle = '#1a1a2e';
+    ctx.fillRect(4, 4, 56, 48);
+    ctx.strokeStyle = acc;
+    ctx.lineWidth = 1.5;
+    ctx.strokeRect(4, 4, 56, 48);
+    // Slide header
+    ctx.fillStyle = body;
+    ctx.fillRect(4, 4, 56, 9);
+    ctx.fillStyle = '#000';
+    ctx.font = 'bold 4px monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText('Q4 REPORT', 32, 10);
+    // Bar chart going up dramatically
+    const bars = [8, 14, 20, 28, 38, 52];
+    bars.forEach((h, i) => {
+        ctx.fillStyle = i === bars.length - 1 ? '#ff4444' : '#4444aa';
+        ctx.fillRect(10 + i * 9, 52 - h, 7, h);
+    });
+    // Urgent label
+    ctx.fillStyle = '#ff4444';
+    ctx.font = 'bold 5px monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText('URGENT!', 32, 58);
+    // Arrow pointing up
+    ctx.strokeStyle = '#ff4444'; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(50, 18); ctx.lineTo(50, 26); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(47, 21); ctx.lineTo(50, 18); ctx.lineTo(53, 21); ctx.stroke();
+}
+
+// ─── Urgent Ticket nonsense requirements ─────────────────────────────────────
+
+const _TICKET_TEXTS = [
+    ['URGENT', 'make it pop'],
+    ['P0', 'add blockchain'],
+    ['BLOCKER', 'why so slow?'],
+    ['CRITICAL', 'needs more AI'],
+    ['URGENT', 'logo too small'],
+    ['P0', 'just make it', 'real-time'],
+    ['BLOCKER', 'fix the thing'],
+    ['CRITICAL', 'wrong shade', 'of blue'],
+    ['URGENT', 'stakeholder', 'wants charts'],
+    ['P0', 'need this', 'by yesterday'],
+    ['BLOCKER', 'can we pivot?'],
+    ['CRITICAL', 'prod is slow', 'pls check'],
+    ['URGENT', 'make numbers', 'go up'],
+    ['P0', 'synergy lacking'],
+    ['BLOCKER', 'not enough', 'disruption'],
+    ['CRITICAL', 'CEO saw demo', 'wants changes'],
+];
+
+function _drawUrgentTicketSprite(ctx, body, acc, ticketText) {
+    const [priority, ...lines] = ticketText;
+    // Jira-style ticket card
+    ctx.fillStyle = '#0a1628';
+    ctx.fillRect(2, 2, 60, 60);
+    ctx.strokeStyle = acc;
+    ctx.lineWidth = 1.5;
+    ctx.strokeRect(2, 2, 60, 60);
+
+    // Priority badge (top left)
+    ctx.fillStyle = '#ff2222';
+    ctx.fillRect(2, 2, 60, 11);
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 6px monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText(`!! ${priority} !!`, 32, 10);
+
+    // Ticket key (fake Jira ID)
+    ctx.fillStyle = '#3388cc';
+    ctx.font = 'bold 4px monospace';
+    ctx.textAlign = 'left';
+    ctx.fillText('PROD-????', 5, 20);
+
+    // Requirement lines
+    ctx.fillStyle = '#cccccc';
+    ctx.font = 'bold 5px monospace';
+    ctx.textAlign = 'center';
+    lines.forEach((line, i) => {
+        ctx.fillText(line, 32, 30 + i * 8);
+    });
+
+    // Status: OVERDUE
+    ctx.fillStyle = '#ff6600';
+    ctx.font = 'bold 4px monospace';
+    ctx.textAlign = 'left';
+    ctx.fillText('STATUS: OVERDUE', 5, 52);
+
+    // Assignee: you
+    ctx.fillStyle = '#555';
+    ctx.font = 'bold 3.5px monospace';
+    ctx.fillText('Assignee: you', 5, 59);
+}
+
 // ─── Explosion ────────────────────────────────────────────────────────────────
 
 function spawnExplosion(x, y, radius, scene) {
@@ -282,6 +539,128 @@ const STATE = { IDLE: 0, ALERT: 1, CHASE: 2, ATTACK: 3, DEAD: 4 };
 
 let _enemySerial = 0;
 
+// ─── Boss Ability Controller ──────────────────────────────────────────────────
+
+class BossAbilityController {
+    constructor(enemy) {
+        this._enemy = enemy;
+        this._em    = null;  // set by EntityManager after spawn
+        this._timers = {};
+        this._phase  = 0;
+        this._splitDone = false;
+    }
+
+    tick(dt, player, audio) {
+        const def = this._enemy.def;
+        if (!def.bossAbility || !this._em) return;
+
+        // Phase transitions
+        if (def.bossPhases) {
+            const hpRatio = this._enemy.health / def.health;
+            for (let i = 0; i < def.bossPhases.length; i++) {
+                if (hpRatio <= def.bossPhases[i] && this._phase <= i) {
+                    this._phase = i + 1;
+                    this._onPhaseChange(i + 1, player, audio, def);
+                }
+            }
+        }
+
+        switch (def.bossAbility) {
+            case 'spawn_duplicates':  this._tickSpawnDuplicates(dt, player, audio); break;
+            case 'scheduled_reports': this._tickScheduledReports(dt, player, audio, def); break;
+            default: break;
+        }
+    }
+
+    onDeath(audio) {
+        const def = this._enemy.def;
+        if (def.bossAbility === 'split_on_damage' && !this._splitDone) {
+            this._splitDone = true;
+            this._doSplit(audio, def);
+        }
+    }
+
+    _onPhaseChange(phase, player, audio, def) {
+        if (def.bossSpawnOnPhase && this._em) {
+            const count = def.bossSpawnCount ?? 3;
+            for (let i = 0; i < count; i++) {
+                const angle = (i / count) * Math.PI * 2;
+                const sx = this._enemy.x + Math.cos(angle) * 1.8;
+                const sy = this._enemy.y + Math.sin(angle) * 1.8;
+                this._em._spawnEnemy(def.bossSpawnOnPhase, sx, sy);
+            }
+        }
+        if (audio) audio.play('enemy_alert');
+    }
+
+    _tickSpawnDuplicates(dt, player, audio) {
+        const def = this._enemy.def;
+        // Revive a random dead enemy periodically
+        this._timers.revive = (this._timers.revive ?? 0) - dt;
+        if (this._timers.revive <= 0) {
+            this._timers.revive = def.bossReviveCooldown ?? 8000;
+            if (this._em) this._em._reviveRandomDead(audio);
+        }
+    }
+
+    _tickScheduledReports(dt, player, audio, def) {
+        // Projectile barrage every bossScheduledInterval ms
+        this._timers.report = (this._timers.report ?? 0) - dt;
+        if (this._timers.report <= 0) {
+            this._timers.report = def.bossScheduledInterval ?? 5000;
+            const count = def.bossReportCount ?? 5;
+            const dx    = player.x - this._enemy.x;
+            const dy    = player.y - this._enemy.y;
+            const len   = Math.sqrt(dx * dx + dy * dy);
+            if (len >= 0.01) {
+                const ndx = dx / len;
+                const ndy = dy / len;
+                for (let i = 0; i < count; i++) {
+                    const spread = ((i / (count - 1)) - 0.5) * 0.6;
+                    const cos = Math.cos(spread);
+                    const sin = Math.sin(spread);
+                    const fdx = ndx * cos - ndy * sin;
+                    const fdy = ndx * sin + ndy * cos;
+                    this._em._spawnEnemyProjectile(
+                        this._enemy.x + fdx * 0.7,
+                        this._enemy.y + fdy * 0.7,
+                        fdx, fdy,
+                        this._enemy.damage,
+                        def.projSpeed ?? 0.3,
+                    );
+                }
+                if (audio) audio.play('enemy_shoot');
+            }
+        }
+
+        // Spawn urgent tickets every 12 seconds (separate timer)
+        this._timers.ticket = (this._timers.ticket ?? 0) - dt;
+        if (this._timers.ticket <= 0) {
+            this._timers.ticket = 12000;
+            const angles = [Math.PI * 0.5, Math.PI, Math.PI * 1.5];
+            for (const angle of angles) {
+                const sx = this._enemy.x + Math.cos(angle) * 2.5;
+                const sy = this._enemy.y + Math.sin(angle) * 2.5;
+                if (this._em) this._em._spawnEnemy('urgent_ticket', sx, sy);
+            }
+            if (audio) audio.play('enemy_alert');
+        }
+    }
+
+    _doSplit(audio, def) {
+        if (!this._em) return;
+        const count = def.bossSplitCount ?? 2;
+        const kind  = def.bossSplitType ?? 'aggregator_shard';
+        for (let i = 0; i < count; i++) {
+            const angle = (i / count) * Math.PI * 2;
+            const sx = this._enemy.x + Math.cos(angle) * 1.5;
+            const sy = this._enemy.y + Math.sin(angle) * 1.5;
+            this._em._spawnEnemy(kind, sx, sy);
+        }
+        if (audio) audio.play('enemy_alert');
+    }
+}
+
 // ─── Enemy ────────────────────────────────────────────────────────────────────
 
 export class Enemy {
@@ -303,8 +682,11 @@ export class Enemy {
         this.deathTimer   = 0;
         this.score        = 0;
         this._scene       = scene;
-        // Assign kind-appropriate label — tables for table enemies, flow names for flows
-        this._tableName   = kind === 'flow_specter' ? _randomFlowName() : _randomTable();
+        this._abilityCtrl = this.def.bossAbility ? new BossAbilityController(this) : null;
+        // Assign kind-appropriate label — tables for table enemies, flow names for flows, tickets for urgent_ticket
+        this._tableName   = kind === 'flow_specter'   ? _randomFlowName()
+                          : kind === 'urgent_ticket'  ? _TICKET_TEXTS[Math.floor(Math.random() * _TICKET_TEXTS.length)]
+                          : _randomTable();
 
         this._createMesh(kind, scene);
     }
@@ -362,16 +744,28 @@ export class Enemy {
             _drawFlowSprite(ctx, body, acc, this._tableName);
         } else if (kind === 'sql_mutant') {
             _drawSqlSprite(ctx, body, acc);
+        } else if (kind === 'urgent_ticket') {
+            _drawUrgentTicketSprite(ctx, body, acc, this._tableName);
         } else if (isBoss) {
-            ctx.fillStyle = body;
-            ctx.fillRect(8, 8, 48, 48);
-            ctx.fillStyle = acc;
-            ctx.fillRect(12, 12, 14, 14);
-            ctx.fillRect(38, 12, 14, 14);
-            ctx.fillRect(12, 40, 40, 6);
-            ctx.fillStyle = '#ffffff';
-            ctx.fillRect(15, 17, 8, 5);
-            ctx.fillRect(41, 17, 8, 5);
+            switch (kind) {
+                case 'extractor_boss':   _drawExtractorSprite(ctx, body, acc);  break;
+                case 'validator_boss':   _drawValidatorSprite(ctx, body, acc, this._abilityCtrl?._phase ?? 0); break;
+                case 'optimizer_boss':   _drawOptimizerSprite(ctx, body, acc);  break;
+                case 'aggregator_boss':  _drawAggregatorSprite(ctx, body, acc); break;
+                case 'stakeholder_boss': _drawStakeholderSprite(ctx, body, acc);break;
+                case 'aggregator_shard': _drawAggregatorShardSprite(ctx, body, acc); break;
+                default:
+                    // Generic boss (server_boss)
+                    ctx.fillStyle = body;
+                    ctx.fillRect(8, 8, 48, 48);
+                    ctx.fillStyle = acc;
+                    ctx.fillRect(12, 12, 14, 14);
+                    ctx.fillRect(38, 12, 14, 14);
+                    ctx.fillRect(12, 40, 40, 6);
+                    ctx.fillStyle = '#ffffff';
+                    ctx.fillRect(15, 17, 8, 5);
+                    ctx.fillRect(41, 17, 8, 5);
+            }
         } else {
             // Table-type enemies (data_zombie, pipeline_demon, config_monster) look like DB tables
             _drawTableSprite(ctx, body, acc, this._tableName);
@@ -421,8 +815,9 @@ export class Enemy {
         ctx.fillRect(barX, barY, Math.round(barW * hpRatio), barH);
 
         // Flavor label inside HP bar based on enemy kind
-        const hpLabel = kind === 'flow_specter' ? `${this.health} retries`
-                      : kind === 'sql_mutant'   ? `${this.health}% scanned`
+        const hpLabel = kind === 'flow_specter'  ? `${this.health} retries`
+                      : kind === 'sql_mutant'    ? `${this.health}% scanned`
+                      : kind === 'urgent_ticket' ? `priority: P${this.health}`
                       : `${this.health} rows`;
         ctx.fillStyle = '#ffffff';
         ctx.font      = `bold ${isBoss ? 9 : 7}px monospace`;
@@ -444,6 +839,7 @@ export class Enemy {
             this.deathTimer = 600;
             this.score  = this.def.score;
             audio.play('enemy_death');
+            if (this._abilityCtrl) this._abilityCtrl.onDeath(audio);
         } else {
             if (this.state === STATE.IDLE) {
                 this.state = STATE.ALERT;
@@ -536,6 +932,9 @@ export class Enemy {
             }
             if (!this.def.isRanged) this._moveToward(dt * 0.3, player.x, player.y, map);
         }
+
+        // Tick boss ability controller (call at end of update, after state machine)
+        if (this._abilityCtrl) this._abilityCtrl.tick(dt, player, audio);
     }
 
     _moveToward(dt, tx, ty, map) {
@@ -1029,6 +1428,9 @@ export class EntityManager {
         this.projectiles = [];
         this._scoreQueue = 0;
         this._bossDead   = false;
+        this._deadPool   = [];
+        this._difficulty = difficulty;
+        this._hadBoss    = false;
 
         const DAMAGE_MULT = [0.6, 1.0, 1.4];
         const damageMult  = DAMAGE_MULT[difficulty] ?? 1.0;
@@ -1036,7 +1438,10 @@ export class EntityManager {
         for (const spawn of level.entitySpawns) {
             if (spawn.type === 'enemy') {
                 if ((spawn.minDifficulty ?? 0) <= difficulty) {
-                    this.enemies.push(new Enemy(spawn.kind, spawn.x, spawn.y, scene, damageMult));
+                    const e = new Enemy(spawn.kind, spawn.x, spawn.y, scene, damageMult);
+                    if (e._abilityCtrl) e._abilityCtrl._em = this;
+                    this.enemies.push(e);
+                    if (ENEMY_TYPES[spawn.kind]?.isBoss) this._hadBoss = true;
                 }
             } else if (spawn.type === 'item') {
                 this.items.push(new Item(spawn.kind, spawn.x, spawn.y, scene));
@@ -1045,6 +1450,26 @@ export class EntityManager {
     }
 
     getMap() { return this._map; }
+
+    _spawnEnemy(kind, x, y) {
+        const damageMult = [0.6, 1.0, 1.4][this._difficulty] ?? 1.0;
+        const e = new Enemy(kind, x, y, this._scene, damageMult);
+        if (e._abilityCtrl) { e._abilityCtrl._em = this; }
+        this.enemies.push(e);
+    }
+
+    _spawnEnemyProjectile(x, y, dx, dy, damage, speed = 0.25) {
+        this.projectiles.push(new Projectile(x, y, dx, dy, damage, 'enemy', this._scene, 0, speed));
+    }
+
+    _reviveRandomDead(audio) {
+        // Spawn a new zombie near the dead zone of the map
+        const dead = this._deadPool;
+        if (!dead || dead.length === 0) return;
+        const src = dead[Math.floor(Math.random() * dead.length)];
+        this._spawnEnemy('data_zombie', src.x + (Math.random() - 0.5) * 2, src.y + (Math.random() - 0.5) * 2);
+        if (audio) audio.play('enemy_alert');
+    }
 
     firePlayerWeapon(player, def) {
         if (def.dropAll) {
@@ -1195,7 +1620,13 @@ export class EntityManager {
         }
 
         this.projectiles = this.projectiles.filter(p => !p.removed);
-        this.enemies     = this.enemies.filter(e => !e.removed);
+        this.enemies     = this.enemies.filter(e => {
+            if (e.removed && !e.def.isBoss) {
+                this._deadPool.push({ x: e.x, y: e.y, kind: e.def.id });
+                if (this._deadPool.length > 10) this._deadPool.shift();
+            }
+            return !e.removed;
+        });
         this.items       = this.items.filter(i => !i.removed);
     }
 
@@ -1204,8 +1635,15 @@ export class EntityManager {
     }
 
     bossDefeated() {
-        return this.enemies.some(e => e.def.isBoss && !e.isAlive()) ||
-               (this._bossDead === true);
+        if (this._bossDead === true) return true;
+        const bosses = this.enemies.filter(e => e.def.isBoss);
+        // Also count bosses that have been removed (dead and disposed)
+        const activeBossCount = bosses.length;
+        if (activeBossCount === 0 && this._deadPool.some(d => d.kind?.endsWith('_boss') || d.kind === 'aggregator_shard')) {
+            // All bosses were spawned and are now dead/removed
+            return this._hadBoss;
+        }
+        return bosses.length > 0 && bosses.every(e => !e.isAlive());
     }
 
     allEnemiesDefeated() { return this.bossDefeated(); }

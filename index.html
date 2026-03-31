@@ -137,6 +137,98 @@
             cursor: pointer;
         }
         .screen-btn:hover { opacity: 0.7; }
+        /* ── Mission select ─────────────────────────────────────────────────────── */
+        #mission-select {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0,0,0,0.92);
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: #44aaff;
+            text-align: center;
+            z-index: 10;
+            font-family: 'Courier New', monospace;
+        }
+        #mission-select h2 {
+            font-size: 2rem;
+            letter-spacing: 8px;
+            margin-bottom: 0.3rem;
+            color: #ff2200;
+        }
+        #mission-select .tagline {
+            color: #555;
+            font-size: 0.8rem;
+            letter-spacing: 3px;
+            margin-bottom: 2rem;
+        }
+        #mission-list {
+            display: flex;
+            gap: 0.8rem;
+            flex-wrap: wrap;
+            justify-content: center;
+            max-width: 900px;
+        }
+        .mission-card {
+            background: transparent;
+            border: 2px solid #44aaff;
+            color: #44aaff;
+            font-family: 'Courier New', monospace;
+            padding: 1rem 1.2rem;
+            min-width: 140px;
+            cursor: pointer;
+            text-align: left;
+            transition: all 0.2s;
+        }
+        .mission-card:hover { background: rgba(68,170,255,0.12); box-shadow: 0 0 15px #44aaff; }
+        .mission-card.locked { opacity: 0.35; cursor: not-allowed; border-color: #333; color: #444; }
+        .mission-layer { display: block; font-size: 1.5rem; font-weight: bold; color: #ff4444; margin-bottom: 0.2rem; }
+        .mission-name  { display: block; font-size: 0.75rem; letter-spacing: 2px; margin-bottom: 0.4rem; color: #aaa; }
+        .mission-boss  { display: block; font-size: 0.65rem; color: #ffaa44; margin-bottom: 0.3rem; }
+        .mission-score { display: block; font-size: 0.65rem; color: #555; }
+        #mission-total { margin-top: 1.5rem; color: #888; font-size: 0.85rem; letter-spacing: 2px; }
+        /* ── Mission briefing ────────────────────────────────────────────────────── */
+        #mission-briefing {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0,0,0,0.93);
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: #ccc;
+            text-align: center;
+            z-index: 10;
+            font-family: 'Courier New', monospace;
+        }
+        #briefing-layer  { font-size: 3rem; color: #ff2200; letter-spacing: 6px; font-weight: bold; text-shadow: 0 0 20px #ff2200; }
+        #briefing-title  { font-size: 1rem; letter-spacing: 6px; color: #44aaff; margin: 0.5rem 0 1.5rem; }
+        #briefing-lines  { color: #888; font-size: 0.85rem; line-height: 2; margin-bottom: 1.5rem; }
+        #briefing-boss-section { border: 1px solid #333; padding: 0.8rem 2rem; margin-bottom: 1.8rem; }
+        #briefing-boss-name    { display: block; font-size: 1.1rem; color: #ff4444; letter-spacing: 4px; margin-bottom: 0.3rem; }
+        #briefing-boss-desc    { display: block; font-size: 0.75rem; color: #888; }
+        /* ── Level complete ──────────────────────────────────────────────────────── */
+        #level-complete {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0,20,40,0.93);
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: #44aaff;
+            text-align: center;
+            z-index: 10;
+            font-family: 'Courier New', monospace;
+        }
+        #level-complete h2 { font-size: 2.5rem; letter-spacing: 6px; text-shadow: 0 0 20px #44aaff; margin-bottom: 0.5rem; }
+        #lc-mission-name   { color: #888; font-size: 0.9rem; letter-spacing: 4px; margin-bottom: 0.8rem; }
+        #lc-score          { font-size: 1.3rem; color: #fff; margin-bottom: 0.5rem; }
+        #lc-next-mission   { color: #ffaa00; font-size: 0.85rem; letter-spacing: 2px; margin-bottom: 1.5rem; }
         #pause-screen {
             position: fixed;
             top: 50%; left: 50%;
@@ -220,7 +312,43 @@
 
     <div id="pause-screen">
         <h3>PIPELINE PAUSED</h3>
-        <p style="color:#888;font-size:0.85rem">Click game to resume / ESC to release pointer lock</p>
+        <div style="display:flex;gap:1rem;margin-top:1rem">
+            <button class="screen-btn" id="pause-resume-btn" style="color:#44cc44;border-color:#44cc44;font-size:0.8rem;padding:8px 20px">RESUME</button>
+            <button class="screen-btn" id="pause-quit-btn"   style="color:#ff4444;border-color:#ff4444;font-size:0.8rem;padding:8px 20px">QUIT TO MENU</button>
+        </div>
+        <p style="color:#555;font-size:0.75rem;margin-top:0.8rem">ESC — quit to mission select</p>
+    </div>
+
+    <!-- Mission select screen -->
+    <div id="mission-select">
+        <h2>SELECT MISSION</h2>
+        <p class="tagline">CHOOSE YOUR LAYER. SURVIVE THE PIPELINE.</p>
+        <div id="mission-list"></div>
+        <div id="mission-total"></div>
+    </div>
+
+    <!-- Mission briefing screen -->
+    <div id="mission-briefing">
+        <div id="briefing-layer"></div>
+        <div id="briefing-title"></div>
+        <div id="briefing-lines"></div>
+        <div id="briefing-boss-section">
+            <span id="briefing-boss-name"></span>
+            <span id="briefing-boss-desc"></span>
+        </div>
+        <div class="diff-btns">
+            <button class="screen-btn" id="briefing-back">BACK</button>
+            <button class="screen-btn" id="briefing-launch" style="color:#ff2200;border-color:#ff2200">LAUNCH PIPELINE</button>
+        </div>
+    </div>
+
+    <!-- Level complete screen -->
+    <div id="level-complete">
+        <h2>PIPELINE COMPLETE</h2>
+        <div id="lc-mission-name"></div>
+        <div id="lc-score"></div>
+        <div id="lc-next-mission"></div>
+        <button class="screen-btn" id="lc-continue">CONTINUE</button>
     </div>
 
     <script src="https://cdn.babylonjs.com/babylon.js"></script>

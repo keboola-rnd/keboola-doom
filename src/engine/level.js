@@ -100,7 +100,7 @@ function makeCeilingTexture(scene) {
 
 // Data engineering memes + actual error messages spraypainted on the walls.
 // lines[0] is the biggest / headline, subsequent lines are smaller.
-const GRAFFITI = [
+const GRAFFITI_DEFAULT = [
     // Memes
     { lines: ['ACCESS DB', 'IS NOT DEAD'],                color: '#ff6600' },
     { lines: ['NULL IS', 'BEST COLUMN'],                  color: '#00ffcc' },
@@ -238,7 +238,7 @@ export const GRAFFITI_DIRS = [
 //   South face (visible from +Z side): rotY = Math.PI
 //   West  face (visible from -X side): rotY = -Math.PI/2
 //   East  face (visible from +X side): rotY =  Math.PI/2
-function buildGraffiti(scene, map) {
+function buildGraffiti(scene, map, msgs) {
     const rows = map.length;
     const cols = map[0].length;
 
@@ -271,12 +271,13 @@ function buildGraffiti(scene, map) {
     _shuffle(candidates);
 
     // Place as many signs as we have messages (capped by available faces)
-    const msgs   = _shuffle([...GRAFFITI]);
-    const count  = Math.min(msgs.length, candidates.length);
+    const allMsgs = msgs ? [...GRAFFITI_DEFAULT, ...msgs] : [...GRAFFITI_DEFAULT];
+    const shuffled = _shuffle(allMsgs);
+    const count  = Math.min(shuffled.length, candidates.length);
 
     for (let i = 0; i < count; i++) {
         const { r, c, d } = candidates[i];
-        const { lines, color } = msgs[i];
+        const { lines, color } = shuffled[i];
 
         // Pass flip flag so the texture is pre-mirrored; no uScale hack needed.
         const tex  = makeGraffitiTexture(scene, i, lines, color, d.flipU);
@@ -302,7 +303,7 @@ function buildGraffiti(scene, map) {
 
 // ─── Level entry point ────────────────────────────────────────────────────────
 
-export function buildLevel(scene, map) {
+export function buildLevel(scene, map, extraGraffiti) {
     const rows = map.length;
     const cols = map[0].length;
 
@@ -366,5 +367,5 @@ export function buildLevel(scene, map) {
     ceiling.isPickable = false;
 
     // Graffiti — data memes spraypainted on exposed wall faces
-    buildGraffiti(scene, map);
+    buildGraffiti(scene, map, extraGraffiti);
 }

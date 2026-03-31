@@ -60,7 +60,7 @@ export class HUD {
     notifyKill()   { this._faceRage  = 800; }
     notifyHurt()   { this._faceOuch  = 400; }
 
-    draw(ctx, player, weaponSystem, score, killsLeft, enemies) {
+    draw(ctx, player, weaponSystem, score, killsLeft, enemies, missionId, missionName) {
         const W = ctx.canvas.width;
         const H = ctx.canvas.height;
         ctx.clearRect(0, 0, W, H);
@@ -72,6 +72,8 @@ export class HUD {
         this._drawBar(ctx, player, weaponSystem, score, killsLeft, W, H);
         this._drawScore(ctx, score, killsLeft, W);
         if (this._showMinimap)       this._drawMinimap(ctx, player, enemies);
+        this._drawBossBar(ctx, enemies, W, H);
+        if (missionId) this._drawMissionTag(ctx, missionId, missionName, W);
     }
 
     // ── Full status bar ───────────────────────────────────────────────────────
@@ -774,6 +776,74 @@ export class HUD {
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────
+
+    // ── Boss HP bar ───────────────────────────────────────────────────────────
+
+    _drawBossBar(ctx, enemies, W, H) {
+        const boss = enemies.find(e => e.def?.isBoss && e.isAlive?.());
+        if (!boss) return;
+
+        const barW = Math.min(500, W * 0.45);
+        const barX = (W - barW) / 2;
+        const barY = 14;
+        const barH = 18;
+        const ratio = Math.max(0, boss.health / boss.def.health);
+
+        // Background panel
+        ctx.fillStyle = 'rgba(0,0,0,0.82)';
+        ctx.fillRect(barX - 6, barY - 22, barW + 12, barH + 28);
+
+        // Boss name
+        ctx.fillStyle = '#ff4444';
+        ctx.font = 'bold 11px Courier New';
+        ctx.textAlign = 'center';
+        ctx.fillText(`[ ${boss.def.name.toUpperCase()} ]`, W / 2, barY - 4);
+
+        // HP bar background
+        ctx.fillStyle = '#220000';
+        ctx.fillRect(barX, barY, barW, barH);
+
+        // HP fill
+        const hpCol = ratio > 0.5 ? '#cc2200' : ratio > 0.25 ? '#ff6600' : '#ff0000';
+        ctx.fillStyle = hpCol;
+        ctx.fillRect(barX, barY, Math.round(barW * ratio), barH);
+
+        // Phase markers
+        if (boss.def.bossPhases) {
+            ctx.strokeStyle = '#ffff00';
+            ctx.lineWidth = 2;
+            for (const threshold of boss.def.bossPhases) {
+                const px = barX + barW * threshold;
+                ctx.beginPath();
+                ctx.moveTo(px, barY);
+                ctx.lineTo(px, barY + barH);
+                ctx.stroke();
+            }
+        }
+
+        // HP text
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 10px Courier New';
+        ctx.textAlign = 'center';
+        ctx.fillText(`${boss.health} / ${boss.def.health}`, W / 2, barY + barH - 2);
+
+        ctx.textAlign = 'left';
+    }
+
+    // ── Mission tag ───────────────────────────────────────────────────────────
+
+    _drawMissionTag(ctx, missionId, missionName, W) {
+        const text = `${missionId} — ${missionName}`;
+        ctx.font = 'bold 11px Courier New';
+        const tw = ctx.measureText(text).width;
+
+        ctx.fillStyle = 'rgba(0,0,0,0.75)';
+        ctx.fillRect(8, 8, tw + 16, 22);
+
+        ctx.fillStyle = '#44aaff';
+        ctx.textAlign = 'left';
+        ctx.fillText(text, 16, 24);
+    }
 
     _roundRect(ctx, x, y, w, h, r) {
         ctx.beginPath();

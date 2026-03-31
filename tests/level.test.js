@@ -58,7 +58,7 @@ function extractDirs(src) {
     return eval(arrText);
 }
 
-const GRAFFITI = extractArray(levelSrc, 'GRAFFITI');
+const GRAFFITI = extractArray(levelSrc, 'GRAFFITI_DEFAULT');
 const DIRS     = extractDirs(levelSrc);
 
 // ─── GRAFFITI tests ───────────────────────────────────────────────────────────
