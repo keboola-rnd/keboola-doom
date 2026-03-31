@@ -627,7 +627,7 @@ class Game {
     _cheatAllWeapons() {
         this._usedCheats = true;
         const p = this._player;
-        ['sql_gun', 'data_shotgun', 'pipeline_launcher', 'bfd_9000', 'kai_assistant', 'drop_all_tables']
+        ['chainsaw', 'sql_gun', 'data_shotgun', 'super_shotgun', 'chaingun', 'pipeline_launcher', 'plasma_rifle', 'kai_assistant', 'drop_all_tables']
             .forEach(w => p.giveWeapon(w));
         p.armor = 100;
         Object.keys(p.ammo).forEach(k => { p.ammo[k] = MAX_AMMO[k] ?? 0; });
