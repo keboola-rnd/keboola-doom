@@ -969,6 +969,11 @@ export class Enemy {
         this._hitFlash    = 0;
         this.deathTimer   = 0;
         this.score        = 0;
+
+        // Boss facing direction — bosses turn slowly and only fire forward
+        const initAngle = Math.random() * Math.PI * 2;
+        this._facingX = Math.cos(initAngle);
+        this._facingY = Math.sin(initAngle);
         this._scene       = scene;
         this._abilityCtrl = this.def.bossAbility ? new BossAbilityController(this) : null;
         // Assign kind-appropriate label — tables for table enemies, flow names for flows, tickets for urgent_ticket
@@ -1183,6 +1188,27 @@ export class Enemy {
         const canSee = dist < this.def.sightRange &&
             hasLineOfSight(map, this.x, this.y, player.x, player.y);
 
+        // ── Boss facing: turn slowly toward player only when line of sight ──
+        if (this.def.isBoss && canSee && dist > 0.01) {
+            const TURN_SPEED = 0.0012;  // radians per ms (~70 deg/s)
+            const targetX = dx / dist;
+            const targetY = dy / dist;
+            // Cross product determines turn direction
+            const cross = this._facingX * targetY - this._facingY * targetX;
+            const turnAmount = TURN_SPEED * dt;
+            const angle = Math.atan2(this._facingY, this._facingX);
+            const newAngle = angle + Math.sign(cross) * Math.min(turnAmount, Math.abs(Math.asin(Math.min(1, Math.abs(cross)))));
+            this._facingX = Math.cos(newAngle);
+            this._facingY = Math.sin(newAngle);
+        }
+
+        // How well the boss is aimed at the player (1.0 = perfect, -1.0 = backwards)
+        const facingDot = dist > 0.01
+            ? (this._facingX * dx + this._facingY * dy) / dist
+            : 1;
+        // Boss can only fire when facing player within ~18 degrees
+        const bossFacingPlayer = !this.def.isBoss || facingDot > 0.95;
+
         if (this.state === STATE.IDLE) {
             if (canSee) { this.state = STATE.ALERT; this._alertTimer = 350; audio.play('enemy_alert'); }
             else        { this._wander(dt, map); }
@@ -1205,12 +1231,13 @@ export class Enemy {
             if (this._attackTimer <= 0) {
                 this._attackTimer = this.def.attackCooldown;
                 if (this.def.isRanged) {
-                    if (canSee) {
-                        const ndx = dx / dist;
-                        const ndy = dy / dist;
+                    if (canSee && bossFacingPlayer) {
+                        // Bosses fire in their facing direction, normal enemies aim directly
+                        const fdx = this.def.isBoss ? this._facingX : dx / dist;
+                        const fdy = this.def.isBoss ? this._facingY : dy / dist;
                         projectiles.push(new Projectile(
-                            this.x + ndx * 0.6, this.y + ndy * 0.6,
-                            ndx, ndy,
+                            this.x + fdx * 0.6, this.y + fdy * 0.6,
+                            fdx, fdy,
                             this.damage, 'enemy',
                             this._scene,
                             this.def.projSplash ?? 0,
@@ -1219,7 +1246,7 @@ export class Enemy {
                         audio.play('enemy_shoot');
                     }
                 } else {
-                    if (dist <= this.def.attackRange) {
+                    if (dist <= this.def.attackRange && bossFacingPlayer) {
                         player.takeDamage(this.damage);
                         audio.play('player_hurt');
                     }
