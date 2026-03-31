@@ -247,13 +247,145 @@
             letter-spacing: 6px;
             margin-bottom: 1rem;
         }
+        /* ── Name input screen ──────────────────────────────────────────────────── */
+        #name-input-screen {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0,0,0,0.95);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: #ff2200;
+            text-align: center;
+            z-index: 20;
+            font-family: 'Courier New', monospace;
+        }
+        #name-input-screen h1 {
+            font-size: 3.5rem;
+            letter-spacing: 10px;
+            margin-bottom: 0.5rem;
+            text-shadow: 0 0 30px #ff2200, 0 0 60px #ff4400;
+        }
+        #name-input-screen .tagline {
+            color: #4499ff;
+            font-size: 1rem;
+            letter-spacing: 4px;
+            margin-bottom: 2rem;
+        }
+        .name-input-label {
+            color: #666;
+            font-size: 0.8rem;
+            letter-spacing: 4px;
+            margin-bottom: 0.6rem;
+        }
+        #player-name-input {
+            background: transparent;
+            border: 2px solid #ff2200;
+            color: #fff;
+            font-family: 'Courier New', monospace;
+            font-size: 1.2rem;
+            letter-spacing: 4px;
+            padding: 10px 20px;
+            text-align: center;
+            text-transform: uppercase;
+            outline: none;
+            width: 300px;
+            margin-bottom: 1rem;
+        }
+        #player-name-input:focus { box-shadow: 0 0 15px #ff2200; }
+        #player-name-input::placeholder { color: #444; }
+        #name-submit-btn {
+            padding: 10px 40px;
+            background: transparent;
+            border: 2px solid #ff2200;
+            color: #ff2200;
+            font-family: 'Courier New', monospace;
+            font-size: 0.85rem;
+            letter-spacing: 4px;
+            cursor: pointer;
+            text-transform: uppercase;
+            transition: all 0.2s;
+        }
+        #name-submit-btn:hover { background: #ff2200; color: #000; box-shadow: 0 0 20px #ff2200; }
+        #name-input-screen.hidden { display: none; }
+        /* ── Leaderboard ────────────────────────────────────────────────────────── */
+        .leaderboard {
+            margin-top: 1.8rem;
+            text-align: center;
+            min-width: 420px;
+        }
+        .lb-title {
+            color: #ffaa00;
+            font-size: 0.7rem;
+            letter-spacing: 5px;
+            margin-bottom: 0.4rem;
+        }
+        .lb-header {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.6rem;
+            letter-spacing: 2px;
+            padding: 2px 0 4px;
+            border-bottom: 1px solid #333;
+            color: #444;
+            text-transform: uppercase;
+        }
+        .lb-header .lb-rank  { min-width: 28px; text-align: left; }
+        .lb-header .lb-name  { flex: 1; text-align: left; margin: 0 8px; }
+        .lb-header .lb-diff  { min-width: 28px; text-align: center; }
+        .lb-header .lb-level { min-width: 36px; text-align: center; }
+        .lb-header .lb-time  { min-width: 52px; text-align: right; }
+        .lb-header .lb-score { min-width: 64px; text-align: right; margin-left: 8px; }
+        .lb-entry {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.75rem;
+            letter-spacing: 2px;
+            padding: 4px 0;
+            border-bottom: 1px solid #1a1a1a;
+        }
+        .lb-entry .lb-rank  { color: #ff4444; min-width: 28px; text-align: left; }
+        .lb-entry .lb-name  { color: #aaa; flex: 1; text-align: left; margin: 0 8px; text-transform: uppercase; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .lb-entry .lb-diff  { min-width: 28px; text-align: center; font-size: 0.65rem; font-weight: bold; }
+        .lb-entry .lb-level { color: #44cc44; min-width: 36px; text-align: center; font-size: 0.7rem; }
+        .lb-entry .lb-time  { color: #888; min-width: 52px; text-align: right; font-size: 0.7rem; }
+        .lb-entry .lb-score { color: #ffaa00; min-width: 64px; text-align: right; margin-left: 8px; font-weight: bold; }
+        .lb-entry .lb-cheater { color: #ff2200; font-size: 0.65rem; letter-spacing: 1px; margin-left: 5px; font-weight: bold; }
+        .lb-entry.lb-highlight .lb-name  { color: #ffaa00; }
+        .lb-entry.lb-highlight .lb-time  { color: #ffaa00; }
+        .lb-entry.lb-highlight .lb-level { color: #ffaa00; }
+        .lb-empty { color: #333; font-size: 0.75rem; letter-spacing: 2px; padding: 0.5rem 0; }
     </style>
 </head>
 <body>
     <canvas id="renderCanvas"></canvas>
     <canvas id="hud-canvas"></canvas>
 
-    <div id="overlay">
+    <!-- Name input screen — shown first, before difficulty selection -->
+    <div id="name-input-screen">
+        <h1>KEBOOLA DOOM</h1>
+        <p class="tagline">WHEN YOUR PIPELINES START FIGHTING BACK</p>
+        <p class="name-input-label">ENTER AGENT ID</p>
+        <input type="text" id="player-name-input" maxlength="20" placeholder="AGENT_NAME" autocomplete="off" spellcheck="false">
+        <button id="name-submit-btn">INITIALIZE AGENT</button>
+        <div class="leaderboard">
+            <p class="lb-title">TOP AGENTS</p>
+            <div class="lb-header">
+                <span class="lb-rank">#</span>
+                <span class="lb-name">Agent</span>
+                <span class="lb-diff">Dif</span>
+                <span class="lb-level">Lvl</span>
+                <span class="lb-time">Time</span>
+                <span class="lb-score">Score</span>
+            </div>
+            <div id="name-lb-list"></div>
+        </div>
+    </div>
+
+    <div id="overlay" class="hidden">
         <h1>KEBOOLA DOOM</h1>
         <p class="tagline">WHEN YOUR PIPELINES START FIGHTING BACK</p>
         <div class="controls">
@@ -290,7 +422,19 @@
         <h2>ALL JOBS GREEN</h2>
         <p style="color:#aaa;font-size:1rem;margin:0.5rem 0">Enemies terminated. Data is clean. Now go fix the other 47 tickets.</p>
         <div class="screen-score" id="win-score"></div>
-        <button class="screen-btn" id="win-retry-btn">RUN AGAIN</button>
+        <div class="leaderboard">
+            <p class="lb-title">LEADERBOARD</p>
+            <div class="lb-header">
+                <span class="lb-rank">#</span>
+                <span class="lb-name">Agent</span>
+                <span class="lb-diff">Dif</span>
+                <span class="lb-level">Lvl</span>
+                <span class="lb-time">Time</span>
+                <span class="lb-score">Score</span>
+            </div>
+            <div id="win-lb-list"></div>
+        </div>
+        <button class="screen-btn" id="win-retry-btn" style="margin-top:1.5rem">RUN AGAIN</button>
     </div>
 
     <div id="game-msg" style="

@@ -54,6 +54,7 @@ class Game {
         this._hud     = new HUD();
 
         this._state      = GSTATE.MENU;
+        this._playerName = '';
         this._score      = 0;
         this._difficulty = 1; // 0=easy, 1=medium, 2=hard
         this._currentMissionIdx = 0;
@@ -61,6 +62,11 @@ class Game {
         this._missionScores     = [0, 0, 0, 0];
         this._totalScore        = 0;
         this._loadProgress();
+
+        // ── Session tracking (leaderboard) ───────────────────────────────────────
+        this._sessionId      = null;   // Supabase session id
+        this._gameStartTime  = null;   // Date.now() at first mission start
+        this._usedCheats     = false;
 
         this._player        = null;
         this._entityManager = null;
@@ -78,7 +84,52 @@ class Game {
         this._missionBriefingScreen = document.getElementById('mission-briefing');
         this._levelCompleteScreen   = document.getElementById('level-complete');
 
-        const overlay = document.getElementById('overlay');
+        // ── Name input wiring ─────────────────────────────────────────────────────
+        const nameScreen = document.getElementById('name-input-screen');
+        const overlay    = document.getElementById('overlay');
+        const nameInput  = document.getElementById('player-name-input');
+
+        const submitBtn = document.getElementById('name-submit-btn');
+
+        const submitName = async () => {
+            const name = nameInput.value.trim().toUpperCase();
+            this._playerName = name || 'AGENT';
+            this._sessionId      = null;
+            this._gameStartTime  = null;
+            this._usedCheats     = false;
+            // Reset all progress — new name means fresh run
+            this._unlockedMissions = 1;
+            this._missionScores    = [0, 0, 0, 0, 0];
+            this._totalScore       = 0;
+            this._saveProgress();
+
+            // Save to Supabase immediately — show loading state
+            submitBtn.disabled   = true;
+            submitBtn.textContent = 'CONNECTING TO DB...';
+            await this._createSession(this._playerName);
+
+            if (this._sessionId) {
+                submitBtn.textContent = 'AGENT REGISTERED';
+                await new Promise(r => setTimeout(r, 600));
+            } else {
+                submitBtn.textContent = this._lastSessionError
+                    ? `ERR: ${this._lastSessionError.slice(0, 40)}`
+                    : 'DB OFFLINE — PROCEEDING';
+                await new Promise(r => setTimeout(r, 2500));
+            }
+
+            submitBtn.disabled   = false;
+            submitBtn.textContent = 'INITIALIZE AGENT';
+            nameScreen.classList.add('hidden');
+            overlay.classList.remove('hidden');
+        };
+
+        document.getElementById('name-submit-btn').addEventListener('click', submitName);
+        nameInput.addEventListener('keydown', e => { if (e.code === 'Enter') submitName(); });
+
+        // Render leaderboard preview on name screen
+        this._renderLeaderboard('name-lb-list', null);
+
         document.getElementById('btn-easy').addEventListener('click', () => {
             this._difficulty = 0;
             overlay.classList.add('hidden');
@@ -100,7 +151,14 @@ class Game {
         });
         document.getElementById('win-retry-btn').addEventListener('click', () => {
             this._winScreen.style.display = 'none';
-            this._showMissionSelect();
+            // New run — reset session
+            this._sessionId     = null;
+            this._gameStartTime = null;
+            this._usedCheats    = false;
+            this._renderLeaderboard('name-lb-list', this._playerName);
+            nameInput.value = this._playerName !== 'AGENT' ? this._playerName : '';
+            nameScreen.classList.remove('hidden');
+            overlay.classList.add('hidden');
         });
         document.getElementById('briefing-back').addEventListener('click', () => {
             this._missionBriefingScreen.style.display = 'none';
@@ -231,6 +289,138 @@ class Game {
         } catch (e) { /* ignore */ }
     }
 
+    // ── Session tracking ───────────────────────────────────────────────────────
+
+    _collectFingerprint() {
+        const nav = navigator;
+        const scr = screen;
+        const signals = [
+            `${scr.width}x${scr.height}`,
+            Intl.DateTimeFormat().resolvedOptions().timeZone ?? '',
+            nav.language ?? '',
+            String(nav.hardwareConcurrency ?? ''),
+            String(nav.deviceMemory ?? ''),
+            String(scr.colorDepth ?? ''),
+            nav.platform ?? '',
+        ];
+        // Simple FNV-1a-style hash over joined signals
+        let h = 0x811c9dc5;
+        for (const s of signals.join('|')) {
+            h ^= s.charCodeAt(0);
+            h = (Math.imul(h, 0x01000193) >>> 0);
+        }
+        return {
+            screen_res:     `${scr.width}x${scr.height}`,
+            timezone:       Intl.DateTimeFormat().resolvedOptions().timeZone ?? null,
+            language:       nav.language ?? null,
+            hw_concurrency: nav.hardwareConcurrency ?? null,
+            device_memory:  nav.deviceMemory ?? null,
+            color_depth:    scr.colorDepth ?? null,
+            fingerprint:    h.toString(16),
+        };
+    }
+
+    async _createSession(name) {
+        try {
+            const fp = this._collectFingerprint();
+            const res = await fetch('/api/sessions', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name, ...fp }),
+            });
+            if (!res.ok) {
+                const text = await res.text();
+                console.error('[session] POST failed:', res.status, text);
+                this._lastSessionError = `HTTP ${res.status}: ${text.slice(0, 80)}`;
+                return;
+            }
+            const data = await res.json();
+            this._sessionId = data.id;
+        } catch (e) {
+            console.error('[session] POST error:', e);
+            this._lastSessionError = e.message;
+        }
+    }
+
+    _getElapsedSeconds() {
+        if (!this._gameStartTime) return 0;
+        return Math.round((Date.now() - this._gameStartTime) / 1000);
+    }
+
+    async _updateSession({ levelReached, completed = false }) {
+        // Lazily create session if initial creation failed
+        if (!this._sessionId) {
+            await this._createSession(this._playerName);
+        }
+        if (!this._sessionId) {
+            console.error('[session] Cannot update — session creation failed');
+            return;
+        }
+        const body = {
+            level_reached:      levelReached,
+            total_time_seconds: this._getElapsedSeconds(),
+            used_cheats:        this._usedCheats,
+            completed,
+            difficulty:         this._difficulty,
+        };
+        try {
+            const res = await fetch(`/api/sessions/${this._sessionId}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body),
+            });
+            if (!res.ok) console.error('[session] PATCH failed:', res.status, await res.text());
+        } catch (e) {
+            console.error('[session] PATCH error:', e);
+        }
+    }
+
+    // ── Leaderboard ────────────────────────────────────────────────────────────
+
+    async _loadLeaderboard() {
+        try {
+            const res = await fetch('/api/leaderboard');
+            if (!res.ok) return [];
+            return (await res.json()).entries ?? [];
+        } catch (e) { return []; }
+    }
+
+    async _renderLeaderboard(containerId, highlightName) {
+        const el = document.getElementById(containerId);
+        if (!el) return;
+        const entries = await this._loadLeaderboard();
+        if (entries.length === 0) {
+            el.innerHTML = '<p class="lb-empty">NO ENTRIES YET</p>';
+            return;
+        }
+        const DIFF_LABEL = ['JR', 'AE', 'DE'];
+        const DIFF_COLOR = ['#44cc44', '#ffaa00', '#ff4444'];
+        el.innerHTML = entries.map((e, i) => {
+            const highlight = highlightName && e.name === highlightName ? ' lb-highlight' : '';
+            const cheater   = e.used_cheats ? ' <span class="lb-cheater">CHEATER!!!</span>' : '';
+            const level     = `L${e.level_reached}${e.completed ? '✓' : ''}`;
+            const t         = e.total_time_seconds;
+            const h         = Math.floor(t / 3600);
+            const m         = Math.floor((t % 3600) / 60);
+            const s         = t % 60;
+            const time      = h > 0
+                ? `${h}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`
+                : `${m}:${String(s).padStart(2,'0')}`;
+            const diff      = e.difficulty ?? 1;
+            const diffLabel = DIFF_LABEL[diff] ?? 'AE';
+            const diffColor = DIFF_COLOR[diff] ?? '#ffaa00';
+            const score     = (e.score ?? 0).toLocaleString();
+            return `<div class="lb-entry${highlight}">
+                <span class="lb-rank">#${i + 1}</span>
+                <span class="lb-name">${e.name}${cheater}</span>
+                <span class="lb-diff" style="color:${diffColor}">${diffLabel}</span>
+                <span class="lb-level">${level}</span>
+                <span class="lb-time">${time}</span>
+                <span class="lb-score">${score}</span>
+            </div>`;
+        }).join('');
+    }
+
     // ── Mission UI ─────────────────────────────────────────────────────────────────
 
     _showMissionSelect() {
@@ -310,6 +500,11 @@ class Game {
             this._player.ammo.rockets = MAX_AMMO.rockets;
         }
 
+        // Start game timer on first mission of this session
+        if (!this._gameStartTime) this._gameStartTime = Date.now();
+
+        this._bossKilledSaved = false;  // reset per-level flag
+
         this._state = GSTATE.PLAYING;
         this._audio.startMusic();
     }
@@ -331,6 +526,12 @@ class Game {
         this._entityManager.checkPickups(this._player, this._weaponSystem);
         this._score += this._entityManager.collectScore();
 
+        // Save to DB as soon as boss is defeated — don't wait for level complete screen
+        if (!this._bossKilledSaved && this._entityManager.bossDefeated()) {
+            this._bossKilledSaved = true;
+            this._updateSession({ levelReached: this._currentMissionIdx + 1, completed: false });
+        }
+
         if (this._player.isDead()) {
             this._state = GSTATE.DEAD;
             this._audio.stopMusic();
@@ -343,7 +544,9 @@ class Game {
                 : null;
             document.getElementById('death-msg').textContent =
                 _mismatchMsg || DEATH_MESSAGES[Math.floor(Math.random() * DEATH_MESSAGES.length)];
-            document.getElementById('death-score').textContent = `FINAL SCORE: ${this._score}`;
+            const deathTotal = this._totalScore + this._score;
+            document.getElementById('death-score').textContent = `FINAL SCORE: ${deathTotal}`;
+            this._updateSession({ levelReached: this._currentMissionIdx + 1, completed: false });
             this._deathScreen.style.display = 'flex';
             return;
         }
@@ -374,8 +577,13 @@ class Game {
                 this._state = GSTATE.WIN;
                 document.getElementById('win-score').textContent =
                     `TOTAL SCORE: ${this._totalScore} — ALL ${MISSIONS.length} LAYERS CLEARED`;
+                this._updateSession({ levelReached: MISSIONS.length, completed: true }).then(() => {
+                    this._renderLeaderboard('win-lb-list', this._playerName);
+                });
                 this._winScreen.style.display = 'flex';
             } else {
+                // Save progress after each completed level
+                this._updateSession({ levelReached: this._currentMissionIdx + 1, completed: false });
                 // Show level complete screen
                 const nextMission = MISSIONS[this._currentMissionIdx + 1];
                 document.getElementById('lc-mission-name').textContent =
@@ -392,6 +600,7 @@ class Game {
     // ── Cheat codes ────────────────────────────────────────────────────────────
 
     _cheatGodMode() {
+        this._usedCheats = true;
         this._player.godMode = !this._player.godMode;
         console.log('[cheat] godMode =', this._player.godMode);
         if (this._player.godMode) {
@@ -404,6 +613,7 @@ class Game {
     }
 
     _cheatNoclip() {
+        this._usedCheats = true;
         this._player.noclip = !this._player.noclip;
         console.log('[cheat] noclip =', this._player.noclip);
         if (this._player.noclip) {
@@ -414,6 +624,7 @@ class Game {
     }
 
     _cheatAllWeapons() {
+        this._usedCheats = true;
         const p = this._player;
         ['sql_gun', 'data_shotgun', 'pipeline_launcher', 'bfd_9000', 'kai_assistant', 'drop_all_tables']
             .forEach(w => p.giveWeapon(w));

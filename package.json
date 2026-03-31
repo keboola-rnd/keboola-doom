@@ -7,7 +7,9 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "express": "^4.19.2"
+    "dotenv": "^17.3.1",
+    "express": "^4.19.2",
+    "pg": "^8.20.0"
   },
   "devDependencies": {
     "vitest": "^4.1.2"
