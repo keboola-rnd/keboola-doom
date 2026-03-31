@@ -93,7 +93,13 @@ class Game {
 
         const submitName = async () => {
             const name = nameInput.value.trim().toUpperCase();
-            this._playerName = name || 'AGENT';
+            if (!name) {
+                nameInput.focus();
+                nameInput.style.outline = '2px solid #ff4444';
+                setTimeout(() => { nameInput.style.outline = ''; }, 1000);
+                return;
+            }
+            this._playerName = name;
             this._sessionId      = null;
             this._gameStartTime  = null;
             this._usedCheats     = false;
