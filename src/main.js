@@ -131,8 +131,9 @@ class Game {
             if (e.key.length !== 1) return;           // ignore Shift, Enter, Arrow, etc.
             this._cheatBuf = (this._cheatBuf + e.key.toLowerCase()).slice(-10);
             console.log('[cheat]', this._cheatBuf);
-            if (this._cheatBuf.endsWith('iddqd')) this._cheatGodMode();
-            if (this._cheatBuf.endsWith('idkfa')) this._cheatAllWeapons();
+            if (this._cheatBuf.endsWith('iddqd'))  this._cheatGodMode();
+            if (this._cheatBuf.endsWith('idkfa'))  this._cheatAllWeapons();
+            if (this._cheatBuf.endsWith('idclip')) this._cheatNoclip();
         });
 
         // Tab → toggle minimap; Escape → pause/resume
@@ -399,6 +400,16 @@ class Game {
         } else {
             try { this._audio.stopGodMusic(); this._audio.startMusic(); } catch(e) { console.error('[cheat] stopGodMusic failed:', e); }
             this._showCheat('IDDQD — God mode off. Good luck.');
+        }
+    }
+
+    _cheatNoclip() {
+        this._player.noclip = !this._player.noclip;
+        console.log('[cheat] noclip =', this._player.noclip);
+        if (this._player.noclip) {
+            this._showCheat('IDCLIP — noclip ON: walls are just a social construct');
+        } else {
+            this._showCheat('IDCLIP — noclip OFF: physical boundaries reinstated');
         }
     }
 

@@ -640,6 +640,14 @@ export class AudioManager {
                     setTimeout(() => this._tone(f, 0.25, 0.4, 'sine'), i * 120)
                 );
                 break;
+            case 'cast_canon':
+                this._tone(1200, 0.06, 0.15, 'sine');
+                setTimeout(() => this._tone(900, 0.04, 0.1, 'sine'), 60);
+                break;
+            case 'cast_hit':
+                this._tone(600, 0.08, 0.2, 'square');
+                setTimeout(() => this._tone(800, 0.06, 0.15, 'sine'), 50);
+                break;
         }
     }
 }

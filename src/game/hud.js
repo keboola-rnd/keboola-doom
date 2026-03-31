@@ -70,7 +70,7 @@ export class HUD {
 
         this._drawWeaponSprite(ctx, player, weaponSystem, W, H);
         this._drawBar(ctx, player, weaponSystem, score, killsLeft, W, H);
-        this._drawScore(ctx, score, killsLeft, W);
+        this._drawScore(ctx, score, killsLeft, W, missionId);
         if (this._showMinimap)       this._drawMinimap(ctx, player, enemies);
         this._drawBossBar(ctx, enemies, W, H);
         if (missionId) this._drawMissionTag(ctx, missionId, missionName, W);
@@ -517,6 +517,7 @@ export class HUD {
             pipeline_launcher: '#44cc44',
             bfd_9000:          '#44ffff',
             kai_assistant:     '#ff44ff',
+            cast_canon:        '#00ddff',
         };
         const color = COLORS[player.activeWeapon] ?? '#888888';
 
@@ -527,6 +528,7 @@ export class HUD {
             case 'pipeline_launcher': this._wLauncher(ctx, color);          break;
             case 'bfd_9000':          this._wBFD(ctx, color);               break;
             case 'kai_assistant':     this._wKAI(ctx, color);               break;
+            case 'cast_canon':        this._wCastCanon(ctx, fireKick, color); break;
         }
 
         ctx.restore();
@@ -673,6 +675,52 @@ export class HUD {
         }
     }
 
+    _wCastCanon(ctx, kick, color) {
+        // A futuristic type-casting cannon — cylindrical barrel with SQL type ring
+        const oy = kick * -12;
+
+        // Barrel (long, centered)
+        ctx.fillStyle = '#1a1a2e';
+        ctx.fillRect(-10, -70 + oy, 20, 70);
+        ctx.fillStyle = '#2a2a4e';
+        ctx.fillRect(-7, -68 + oy, 14, 66);
+
+        // Type ring (glowing ring around barrel mid-point)
+        const pulse = (Math.sin(Date.now() * 0.006) + 1) * 0.5;
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 3 + pulse * 2;
+        ctx.beginPath();
+        ctx.ellipse(0, -40 + oy, 14, 6, 0, 0, Math.PI * 2);
+        ctx.stroke();
+
+        // Second ring
+        ctx.lineWidth = 1.5;
+        ctx.globalAlpha = 0.6 + pulse * 0.4;
+        ctx.beginPath();
+        ctx.ellipse(0, -28 + oy, 12, 5, 0, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.globalAlpha = 1;
+
+        // Muzzle glow
+        ctx.fillStyle = `rgba(0,220,255,${0.3 + pulse * 0.4})`;
+        ctx.beginPath();
+        ctx.ellipse(0, -70 + oy, 10, 10, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Grip / handle
+        ctx.fillStyle = '#0a2a3a';
+        ctx.fillRect(-12, -10 + oy, 24, 40);
+        ctx.strokeStyle = color; ctx.lineWidth = 1.5;
+        ctx.strokeRect(-12, -10 + oy, 24, 40);
+
+        // CAST label on grip
+        ctx.fillStyle = color;
+        ctx.font = 'bold 8px Courier New';
+        ctx.textAlign = 'center';
+        ctx.fillText('CAST', 0, 14 + oy);
+        ctx.textAlign = 'left';
+    }
+
     // ── Screen overlays ───────────────────────────────────────────────────────
 
     _drawMuzzleFlash(ctx, timer, W, H) {
@@ -733,6 +781,7 @@ export class HUD {
             server_boss:    '#ff44ff',
             flow_specter:   '#44ffff',
             sql_mutant:     '#44ff44',
+            trigger_boss:   '#00ffe5',
         };
         const ENEMY_LABELS = {
             data_zombie:    'Z',
@@ -741,6 +790,7 @@ export class HUD {
             server_boss:    'B',
             flow_specter:   'F',
             sql_mutant:     'S',
+            trigger_boss:   'T',
         };
         for (const enemy of enemies) {
             if (!enemy.isAlive()) continue;
@@ -762,7 +812,7 @@ export class HUD {
 
     // ── Score overlay (top center, classic Doom intermission style) ──────────
 
-    _drawScore(ctx, score, killsLeft, W) {
+    _drawScore(ctx, score, killsLeft, W, missionId) {
         ctx.fillStyle = 'rgba(0,0,0,0.45)';
         ctx.fillRect(W / 2 - 90, 6, 180, 30);
         ctx.fillStyle = C.numYellow;
@@ -771,7 +821,11 @@ export class HUD {
         ctx.fillText(String(score).padStart(7, '0'), W / 2, 24);
         ctx.fillStyle = C.numRed;
         ctx.font = '11px Courier New';
-        ctx.fillText(`${killsLeft} ERRORS ACTIVE`, W / 2, 34);
+        if (missionId === 'L2') {
+            ctx.fillText(`INSERTS REMAINING: ${killsLeft}`, W / 2, 34);
+        } else {
+            ctx.fillText(`${killsLeft} ERRORS ACTIVE`, W / 2, 34);
+        }
         ctx.textAlign = 'left';
     }
 

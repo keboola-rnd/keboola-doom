@@ -67,7 +67,7 @@ describe('GRAFFITI_DIRS — sign facing and placement', () => {
         }
     });
 
-    describe('flipU — West must mirror canvas to compensate for reversed UV axis', () => {
+    describe('flipU — West and East must mirror canvas to compensate for reversed UV axis', () => {
         it('North has flipU=false (rotY=0, UV axis correct)', () => {
             const N = GRAFFITI_DIRS.find(d => d.label === 'N');
             expect(N.flipU).toBe(false);
@@ -83,15 +83,16 @@ describe('GRAFFITI_DIRS — sign facing and placement', () => {
             expect(W.flipU).toBe(true);
         });
 
-        it('East has flipU=false (rotY=+π/2, UV axis correct)', () => {
+        it('East has flipU=true (rotY=+π/2 also reverses UV axis — must compensate)', () => {
             const E = GRAFFITI_DIRS.find(d => d.label === 'E');
-            expect(E.flipU).toBe(false);
+            expect(E.flipU).toBe(true);
         });
 
-        it('West and East have opposite flipU (mirror rotations → mirror UV → one needs flip)', () => {
+        it('West and East both have flipU=true (both ±π/2 rotations reverse the UV axis)', () => {
             const W = GRAFFITI_DIRS.find(d => d.label === 'W');
             const E = GRAFFITI_DIRS.find(d => d.label === 'E');
-            expect(W.flipU).not.toBe(E.flipU);
+            expect(W.flipU).toBe(true);
+            expect(E.flipU).toBe(true);
         });
 
         it('West and East have opposite rotY signs (±π/2)', () => {

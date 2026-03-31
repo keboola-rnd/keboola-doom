@@ -70,6 +70,7 @@ export class Player {
         this.bobSpeed     = 0;
 
         this.godMode = false;   // iddqd cheat — invincible
+        this.noclip  = false;   // idclip cheat — no wall collision
 
         this._map   = null; // set externally for minimap
         this._prevX = sx;
@@ -150,8 +151,8 @@ export class Player {
         const nx = cam.position.x + dx;
         const nz = cam.position.z + dz;
 
-        if (!this._wallAt(nx, cam.position.z, R)) cam.position.x = nx;
-        if (!this._wallAt(cam.position.x, nz, R)) cam.position.z = nz;
+        if (this.noclip || !this._wallAt(nx, cam.position.z, R)) cam.position.x = nx;
+        if (this.noclip || !this._wallAt(cam.position.x, nz, R)) cam.position.z = nz;
     }
 
     _wallAt(x, z, R) {

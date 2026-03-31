@@ -229,7 +229,7 @@ export const GRAFFITI_DIRS = [
     { dr: -1, dc:  0, rotY: 0,            flipU: false, label: 'N' },
     { dr:  1, dc:  0, rotY: Math.PI,      flipU: false, label: 'S' },
     { dr:  0, dc: -1, rotY: -Math.PI / 2, flipU: true,  label: 'W' },
-    { dr:  0, dc:  1, rotY:  Math.PI / 2, flipU: false, label: 'E' },
+    { dr:  0, dc:  1, rotY:  Math.PI / 2, flipU: true,  label: 'E' },
 ];
 
 // Scan the map, collect exposed wall faces, randomly place graffiti on them.
@@ -242,14 +242,13 @@ function buildGraffiti(scene, map, msgs) {
     const rows = map.length;
     const cols = map[0].length;
 
-    // flipU: Babylon left-handed rotation means ±90° rotations produce mirrored UV axes
-    // for opposite directions. East (rotY=+π/2) renders text correctly without flip;
-    // West (rotY=-π/2) is the mirror rotation so its text is reversed — needs flipU=true.
+    // flipU: both ±90° rotations reverse the UV U-axis relative to N/S faces.
+    // West (rotY=-π/2) and East (rotY=+π/2) both need flipU=true to read correctly.
     const DIRS = [
         { dr: -1, dc:  0, getPx: (c) => c + 0.5,  getPz: (r) => r - 0.02,  rotY: 0,            flipU: false }, // N
         { dr:  1, dc:  0, getPx: (c) => c + 0.5,  getPz: (r) => r + 1.02,  rotY: Math.PI,      flipU: false }, // S
-        { dr:  0, dc: -1, getPx: (c) => c - 0.02, getPz: (r) => r + 0.5,   rotY: -Math.PI / 2, flipU: true  }, // W — mirror of E, needs flip
-        { dr:  0, dc:  1, getPx: (c) => c + 1.02, getPz: (r) => r + 0.5,   rotY:  Math.PI / 2, flipU: false }, // E
+        { dr:  0, dc: -1, getPx: (c) => c - 0.02, getPz: (r) => r + 0.5,   rotY: -Math.PI / 2, flipU: true  }, // W
+        { dr:  0, dc:  1, getPx: (c) => c + 1.02, getPz: (r) => r + 0.5,   rotY:  Math.PI / 2, flipU: true  }, // E
     ];
 
     // Collect all valid exposed wall faces

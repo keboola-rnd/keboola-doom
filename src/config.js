@@ -337,6 +337,7 @@ export const ENEMY_TYPES = {
         bossReqCount: 1,        // requirements per barrage
         bossReqDamage: 18,      // damage per req that hits player
         bossReqSpeed: 0.045,    // speed of flying requirements
+        regenRate: 50,          // HP regenerated per second (needs 3+ dashboards to overcome)
     },
     null_pointer: {
         id: 'null_pointer',

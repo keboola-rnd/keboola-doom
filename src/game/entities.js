@@ -482,6 +482,17 @@ function _drawStakeholderSprite(ctx, body, acc) {
     // Smug grin
     ctx.strokeStyle = '#7a3a1a'; ctx.lineWidth = 1.2; ctx.lineCap = 'round';
     ctx.beginPath(); ctx.arc(32, 23, 5, 0.15, Math.PI - 0.15); ctx.stroke();
+
+    // Name badge on suit
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(20, 33, 24, 10);
+    ctx.strokeStyle = acc; ctx.lineWidth = 0.8;
+    ctx.strokeRect(20, 33, 24, 10);
+    ctx.fillStyle = '#000033';
+    ctx.font = 'bold 3.5px monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText('business', 32, 39);
+    ctx.fillText('Stakeholder', 32, 43);
 }
 
 function _drawTriggerBossSprite(ctx, body, acc) {
@@ -955,10 +966,11 @@ export class Enemy {
         this._scene       = scene;
         this._abilityCtrl = this.def.bossAbility ? new BossAbilityController(this) : null;
         // Assign kind-appropriate label — tables for table enemies, flow names for flows, tickets for urgent_ticket
-        this._tableName   = kind === 'flow_specter'    ? _randomFlowName()
-                          : kind === 'urgent_ticket'  ? _TICKET_TEXTS[Math.floor(Math.random() * _TICKET_TEXTS.length)]
-                          : kind === 'extractor_boss' ? 'Generic_extractor'
-                          : kind === 'trigger_boss'   ? 'on: table_updated'
+        this._tableName   = kind === 'flow_specter'       ? _randomFlowName()
+                          : kind === 'urgent_ticket'     ? _TICKET_TEXTS[Math.floor(Math.random() * _TICKET_TEXTS.length)]
+                          : kind === 'extractor_boss'    ? 'Generic_extractor'
+                          : kind === 'trigger_boss'      ? 'on: table_updated'
+                          : kind === 'stakeholder_boss'  ? ''
                           : _randomTable();
 
         this._createMesh(kind, scene);
@@ -1046,8 +1058,8 @@ export class Enemy {
 
         ctx.restore();
 
-        // ── Table name overlay — boss only (table enemies have name in their header) ──
-        if (isBoss) {
+        // ── Table name overlay — boss only, skipped if tableName is empty ──────
+        if (isBoss && this._tableName) {
             const fullName = this._tableName ?? 'unknown_table';
             const mid      = Math.ceil(fullName.length / 2);
             let breakAt = fullName.lastIndexOf('_', mid);
@@ -1088,11 +1100,12 @@ export class Enemy {
         ctx.fillRect(barX, barY, Math.round(barW * hpRatio), barH);
 
         // Flavor label inside HP bar based on enemy kind
-        const hpLabel = kind === 'flow_specter'  ? `${this.health} retries`
-                      : kind === 'sql_mutant'    ? `${this.health}% scanned`
-                      : kind === 'urgent_ticket' ? `priority: P${this.health}`
-                      : kind === 'trigger_boss'  ? `${this.health} events`
-                      : `${this.health} rows`;
+        const hp = Math.ceil(this.health);
+        const hpLabel = kind === 'flow_specter'  ? `${hp} retries`
+                      : kind === 'sql_mutant'    ? `${hp}% scanned`
+                      : kind === 'urgent_ticket' ? `priority: P${hp}`
+                      : kind === 'trigger_boss'  ? `${hp} events`
+                      : `${hp} rows`;
         ctx.fillStyle = '#ffffff';
         ctx.font      = `bold ${isBoss ? 9 : 7}px monospace`;
         ctx.textAlign = 'center';
@@ -1211,6 +1224,13 @@ export class Enemy {
 
         // Tick boss ability controller (call at end of update, after state machine)
         if (this._abilityCtrl) this._abilityCtrl.tick(dt, player, audio);
+
+        // Health regeneration
+        if (this.def.regenRate && this.state !== STATE.DEAD) {
+            const prev = Math.floor(this.health);
+            this.health = Math.min(this.def.health, this.health + this.def.regenRate * (dt / 1000));
+            if (Math.floor(this.health) !== prev) this._drawSprite();
+        }
     }
 
     _moveToward(dt, tx, ty, map) {
