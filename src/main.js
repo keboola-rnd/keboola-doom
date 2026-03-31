@@ -109,10 +109,22 @@ class Game {
             this._totalScore       = 0;
             this._saveProgress();
 
-            // Save to Supabase immediately — show loading state
+            // Save to DB immediately — show loading state
             submitBtn.disabled   = true;
             submitBtn.textContent = 'CONNECTING TO DB...';
             await this._createSession(this._playerName);
+
+            if (this._lastSessionError === 'NAME_TAKEN') {
+                submitBtn.textContent = 'NAME ALREADY TAKEN';
+                nameInput.style.outline = '2px solid #ff4444';
+                await new Promise(r => setTimeout(r, 2000));
+                nameInput.style.outline = '';
+                submitBtn.disabled   = false;
+                submitBtn.textContent = 'INITIALIZE AGENT';
+                nameInput.value = '';
+                nameInput.focus();
+                return;
+            }
 
             if (this._sessionId) {
                 submitBtn.textContent = 'AGENT REGISTERED';
@@ -334,6 +346,10 @@ class Game {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ name, ...fp }),
             });
+            if (res.status === 409) {
+                this._lastSessionError = 'NAME_TAKEN';
+                return;
+            }
             if (!res.ok) {
                 const text = await res.text();
                 console.error('[session] POST failed:', res.status, text);
@@ -405,14 +421,15 @@ class Game {
         el.innerHTML = entries.map((e, i) => {
             const highlight = highlightName && e.name === highlightName ? ' lb-highlight' : '';
             const cheater   = e.used_cheats ? ' <span class="lb-cheater">CHEATER!!!</span>' : '';
-            const level     = `L${e.level_reached}${e.completed ? '✓' : ''}`;
+            const noProgress = e.level_reached === 0 && !e.completed;
+            const level     = noProgress ? '---' : `L${e.level_reached}${e.completed ? '✓' : ''}`;
             const t         = e.total_time_seconds;
             const h         = Math.floor(t / 3600);
             const m         = Math.floor((t % 3600) / 60);
             const s         = t % 60;
-            const time      = h > 0
+            const time      = noProgress ? '---' : (h > 0
                 ? `${h}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`
-                : `${m}:${String(s).padStart(2,'0')}`;
+                : `${m}:${String(s).padStart(2,'0')}`);
             const diff      = e.difficulty ?? 1;
             const diffLabel = DIFF_LABEL[diff] ?? 'AE';
             const diffColor = DIFF_COLOR[diff] ?? '#ffaa00';

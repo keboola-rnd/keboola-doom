@@ -98,7 +98,16 @@ app.post('/api/sessions', async (req, res) => {
     if (!name || typeof name !== 'string') {
         return res.status(400).json({ error: 'name required' });
     }
+    const cleanName = name.trim().slice(0, 20).toUpperCase();
     try {
+        // Check if name is already taken
+        const existing = await pool.query(
+            `SELECT id FROM sessions WHERE name = $1 LIMIT 1`,
+            [cleanName]
+        );
+        if (existing.rows.length > 0) {
+            return res.status(409).json({ error: 'name already taken' });
+        }
         const result = await pool.query(
             `INSERT INTO sessions
                 (name, ip_address, user_agent, screen_res, timezone, language,
@@ -106,7 +115,7 @@ app.post('/api/sessions', async (req, res) => {
              VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
              RETURNING id`,
             [
-                name.trim().slice(0, 20).toUpperCase(),
+                cleanName,
                 clientIp(req),
                 req.headers['user-agent']?.slice(0, 300) ?? null,
                 screen_res   ?? null,
@@ -180,16 +189,14 @@ const SCORE_SQL = `
     )::INTEGER AS score
 `;
 
-// GET /api/leaderboard — top 10, sorted by computed score DESC
+// GET /api/leaderboard — all entries, sorted by computed score DESC
 app.get('/api/leaderboard', async (req, res) => {
     try {
         const result = await pool.query(`
             SELECT name, level_reached, total_time_seconds, used_cheats, completed, difficulty,
                    ${SCORE_SQL}
             FROM sessions
-            WHERE level_reached > 0
-            ORDER BY score DESC
-            LIMIT 10
+            ORDER BY score DESC, level_reached DESC, created_at ASC
         `);
         res.json({ entries: result.rows });
     } catch (e) {
