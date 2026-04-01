@@ -370,6 +370,7 @@ class Game {
     }
 
     async _createSession(name) {
+        this._lastSessionError = null;
         try {
             const fp = this._collectFingerprint();
             const res = await fetch('/api/sessions', {
