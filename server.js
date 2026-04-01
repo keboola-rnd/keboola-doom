@@ -140,20 +140,22 @@ app.patch('/api/sessions/:id', async (req, res) => {
     if (!Number.isFinite(id)) return res.status(400).json({ error: 'invalid id' });
 
     const { level_reached, total_time_seconds, used_cheats, completed, difficulty, kill_score } = req.body ?? {};
+    const updateTime = total_time_seconds !== undefined && total_time_seconds !== null;
     try {
         await pool.query(
             `UPDATE sessions
              SET level_reached      = $1,
-                 total_time_seconds = $2,
-                 used_cheats        = $3,
-                 completed          = $4,
-                 difficulty         = $5,
-                 kill_score         = $6,
+                 total_time_seconds = CASE WHEN $2 THEN $3 ELSE total_time_seconds END,
+                 used_cheats        = $4,
+                 completed          = $5,
+                 difficulty         = $6,
+                 kill_score         = $7,
                  updated_at         = NOW()
-             WHERE id = $7`,
+             WHERE id = $8`,
             [
                 Math.max(0, Math.floor(level_reached ?? 0)),
-                Math.max(0, Math.floor(total_time_seconds ?? 0)),
+                updateTime,
+                updateTime ? Math.max(0, Math.floor(total_time_seconds)) : 0,
                 Boolean(used_cheats),
                 Boolean(completed),
                 [0, 1, 2].includes(difficulty) ? difficulty : 1,

@@ -60,7 +60,7 @@ export class HUD {
     notifyKill()   { this._faceRage  = 800; }
     notifyHurt()   { this._faceOuch  = 400; }
 
-    draw(ctx, player, weaponSystem, score, killsLeft, enemies, missionId, missionName) {
+    draw(ctx, player, weaponSystem, score, killsLeft, enemies, missionId, missionName, elapsedSeconds) {
         const W = ctx.canvas.width;
         const H = ctx.canvas.height;
         ctx.clearRect(0, 0, W, H);
@@ -74,6 +74,7 @@ export class HUD {
         if (this._showMinimap)       this._drawMinimap(ctx, player, enemies);
         this._drawBossBar(ctx, enemies, W, H);
         if (missionId) this._drawMissionTag(ctx, missionId, missionName, W);
+        this._drawTimer(ctx, elapsedSeconds, W);
     }
 
     // ── Full status bar ───────────────────────────────────────────────────────
@@ -1031,6 +1032,27 @@ export class HUD {
         ctx.fillStyle = '#44aaff';
         ctx.textAlign = 'left';
         ctx.fillText(text, 16, 24);
+    }
+
+    _drawTimer(ctx, seconds, W) {
+        if (!seconds) return;
+        const h = Math.floor(seconds / 3600);
+        const m = Math.floor((seconds % 3600) / 60);
+        const s = seconds % 60;
+        const text = h > 0
+            ? `${h}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`
+            : `${m}:${String(s).padStart(2,'0')}`;
+
+        ctx.font = 'bold 13px Courier New';
+        const tw = ctx.measureText(text).width;
+        const x = W - tw - 24;
+
+        ctx.fillStyle = 'rgba(0,0,0,0.75)';
+        ctx.fillRect(x - 8, 8, tw + 16, 22);
+
+        ctx.fillStyle = '#888';
+        ctx.textAlign = 'left';
+        ctx.fillText(text, x, 24);
     }
 
     _roundRect(ctx, x, y, w, h, r) {

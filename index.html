@@ -164,6 +164,13 @@
             letter-spacing: 3px;
             margin-bottom: 2rem;
         }
+        #name-input-screen .credit {
+            color: #555;
+            font-size: 0.8rem;
+            letter-spacing: 3px;
+            margin-bottom: 1.5rem;
+            text-transform: uppercase;
+        }
         #mission-list {
             display: flex;
             gap: 0.8rem;
@@ -370,6 +377,7 @@
     <div id="name-input-screen">
         <h1>KEBOOLA DOOM</h1>
         <p class="tagline">WHEN YOUR PIPELINES START FIGHTING BACK</p>
+        <p class="credit">DATA PIPELINE ENGINEERED BY <span style="color:#ff4444">VOJTA</span> @ <span style="color:#ffaa00">KEBOOLA</span></p>
         <p class="name-input-label">ENTER AGENT ID</p>
         <input type="text" id="player-name-input" maxlength="20" placeholder="AGENT_NAME" autocomplete="off" spellcheck="false">
         <button id="name-submit-btn">INITIALIZE AGENT</button>

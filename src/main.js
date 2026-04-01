@@ -369,7 +369,7 @@ class Game {
         return Math.round((Date.now() - this._gameStartTime) / 1000);
     }
 
-    async _updateSession({ levelReached, completed = false }) {
+    async _updateSession({ levelReached, completed = false, saveTime = false }) {
         // Lazily create session if initial creation failed
         if (!this._sessionId) {
             await this._createSession(this._playerName);
@@ -380,7 +380,7 @@ class Game {
         }
         const body = {
             level_reached:      levelReached,
-            total_time_seconds: this._getElapsedSeconds(),
+            total_time_seconds: saveTime ? this._getElapsedSeconds() : undefined,
             used_cheats:        this._usedCheats,
             completed,
             difficulty:         this._difficulty,
@@ -553,7 +553,7 @@ class Game {
         // Save to DB as soon as boss is defeated — don't wait for level complete screen
         if (!this._bossKilledSaved && this._entityManager.bossDefeated()) {
             this._bossKilledSaved = true;
-            this._updateSession({ levelReached: this._currentMissionIdx + 1, completed: false });
+            this._updateSession({ levelReached: this._currentMissionIdx + 1, completed: false, saveTime: true });
         }
 
         if (this._player.isDead()) {
@@ -601,13 +601,13 @@ class Game {
                 this._state = GSTATE.WIN;
                 document.getElementById('win-score').textContent =
                     `TOTAL SCORE: ${this._totalScore} — ALL ${MISSIONS.length} LAYERS CLEARED`;
-                this._updateSession({ levelReached: MISSIONS.length, completed: true }).then(() => {
+                this._updateSession({ levelReached: MISSIONS.length, completed: true, saveTime: true }).then(() => {
                     this._renderLeaderboard('win-lb-list', this._playerName);
                 });
                 this._winScreen.style.display = 'flex';
             } else {
                 // Save progress after each completed level
-                this._updateSession({ levelReached: this._currentMissionIdx + 1, completed: false });
+                this._updateSession({ levelReached: this._currentMissionIdx + 1, completed: false, saveTime: true });
                 // Show level complete screen
                 const nextMission = MISSIONS[this._currentMissionIdx + 1];
                 document.getElementById('lc-mission-name').textContent =
@@ -695,7 +695,7 @@ class Game {
         }
 
         this._hud.draw(this._hudCtx, this._player, this._weaponSystem, this._score, killsLeft, enemies,
-            mission?.id, mission?.name);
+            mission?.id, mission?.name, this._getElapsedSeconds());
     }
 }
 
