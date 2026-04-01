@@ -187,8 +187,20 @@ class Game {
             this._missionBriefingScreen.style.display = 'none';
             this._startMission(this._currentMissionIdx);
         });
+        document.getElementById('death-newgame-btn').addEventListener('click', () => {
+            this._deathScreen.style.display = 'none';
+            this._startNewGame();
+        });
+        document.getElementById('win-newgame-btn').addEventListener('click', () => {
+            this._winScreen.style.display = 'none';
+            this._startNewGame();
+        });
         document.getElementById('pause-resume-btn').addEventListener('click', () => this._resumeFromPause());
         document.getElementById('pause-quit-btn').addEventListener('click', () => this._quitToMenu());
+        document.getElementById('pause-newgame-btn').addEventListener('click', () => {
+            this._pauseScreen.style.display = 'none';
+            this._startNewGame();
+        });
         document.getElementById('lc-continue').addEventListener('click', () => {
             this._levelCompleteScreen.style.display = 'none';
             if (this._currentMissionIdx >= MISSIONS.length - 1) {
@@ -270,6 +282,12 @@ class Game {
     _quitToMenu() {
         if (this._state !== GSTATE.PAUSED) return;
         this._pauseScreen.style.display = 'none';
+        this._cleanupLevel();
+        this._state = GSTATE.MISSION_SELECT;
+        this._showMissionSelect();
+    }
+
+    _cleanupLevel() {
         this._audio.stopMusic();
         this._audio.stopGodMusic();
         if (this._player)        { this._player.dispose(); this._player = null; }
@@ -283,8 +301,20 @@ class Game {
                 mesh.dispose();
             }
         }
-        this._state = GSTATE.MISSION_SELECT;
-        this._showMissionSelect();
+    }
+
+    _startNewGame() {
+        this._cleanupLevel();
+        // Reset session but keep player name
+        this._sessionId     = null;
+        this._gameStartTime = null;
+        this._usedCheats    = false;
+        // Hide mission select if visible
+        if (this._missionSelectScreen) this._missionSelectScreen.style.display = 'none';
+        // Show difficulty selection overlay (skip name input)
+        this._state = GSTATE.MENU;
+        const overlay = document.getElementById('overlay');
+        overlay.classList.remove('hidden');
     }
 
     // ── Progress persistence ───────────────────────────────────────────────────────
