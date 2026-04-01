@@ -6,6 +6,7 @@
 - L2 Type Cast: fewer records and slower spawns on Medium/Hard
 - Stakeholder boss now scales by difficulty (regen, damage, interval)
 - Added chaingun, chainsaw, and extra armor pickups to L1 and L3
+- New Game button on death, win, and pause screens — change difficulty without re-entering name
 
 ## v1.1.0 — Boss & Combat Improvements
 - Bosses now turn slowly toward the player instead of instant-tracking
