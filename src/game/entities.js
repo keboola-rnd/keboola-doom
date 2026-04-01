@@ -1,6 +1,6 @@
 // Entity system — Enemies, Items, Projectiles + EntityManager
 
-import { ENEMY_TYPES, ITEM_TYPES, WEAPON_DEFS, L2_DATA_TYPES, L2_COLUMN_DEFS, L2_RECORDS_BY_DIFFICULTY, L2_RECORD_SPEED, L2_SPAWN_INTERVALS, L2_MAX_CONCURRENT, L2_COLUMN_HIT_R2, L2_CAST_HIT_R2 } from '../config.js';
+import { ENEMY_TYPES, ITEM_TYPES, WEAPON_DEFS, L2_DATA_TYPES, L2_COLUMN_DEFS, L2_RECORDS_BY_DIFFICULTY, L2_RECORD_SPEED, L2_SPAWN_INTERVALS, L2_MAX_CONCURRENT, L2_COLUMN_HIT_R2, L2_CAST_HIT_R2, L4_BOSS_REGEN_RATE, L4_BOSS_REQ_INTERVAL, L4_BOSS_REQ_DAMAGE } from '../config.js';
 import { isWall, hasLineOfSight } from '../engine/map.js';
 
 // ─── Colors ───────────────────────────────────────────────────────────────────
@@ -2303,7 +2303,7 @@ export class EntityManager {
         this._l2MismatchMsg  = '';
         this._l2SpawnList    = [];
 
-        const DAMAGE_MULT = [0.6, 1.0, 1.4];
+        const DAMAGE_MULT = [0.6, 0.85, 1.15];
         const damageMult  = DAMAGE_MULT[difficulty] ?? 1.0;
 
         for (const spawn of level.entitySpawns) {
@@ -2318,13 +2318,23 @@ export class EntityManager {
                 this.items.push(new Item(spawn.kind, spawn.x, spawn.y, scene));
             }
         }
+        if (this._stakeholderMode) {
+            const boss = this.enemies.find(e => e.def.id === 'stakeholder_boss');
+            if (boss) {
+                boss.def = { ...boss.def,
+                    regenRate:       L4_BOSS_REGEN_RATE[difficulty],
+                    bossReqInterval: L4_BOSS_REQ_INTERVAL[difficulty],
+                    bossReqDamage:   L4_BOSS_REQ_DAMAGE[difficulty],
+                };
+            }
+        }
         if (this._l2Mode) this._initL2Mode(difficulty);
     }
 
     getMap() { return this._map; }
 
     _spawnEnemy(kind, x, y) {
-        const damageMult = [0.6, 1.0, 1.4][this._difficulty] ?? 1.0;
+        const damageMult = [0.6, 0.85, 1.15][this._difficulty] ?? 1.0;
         const e = new Enemy(kind, x, y, this._scene, damageMult);
         if (e._abilityCtrl) { e._abilityCtrl._em = this; }
         this.enemies.push(e);

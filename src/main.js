@@ -147,6 +147,7 @@ class Game {
 
         // Render leaderboard preview on name screen
         this._renderLeaderboard('name-lb-list', null);
+        this._renderChangelog();
 
         document.getElementById('btn-easy').addEventListener('click', () => {
             this._difficulty = 0;
@@ -443,6 +444,29 @@ class Game {
                 <span class="lb-score">${score}</span>
             </div>`;
         }).join('');
+    }
+
+    async _renderChangelog() {
+        const el = document.getElementById('changelog-content');
+        if (!el) return;
+        try {
+            const res = await fetch('changelog.md');
+            if (!res.ok) return;
+            const md = await res.text();
+            // Simple markdown-to-HTML: h2 and list items
+            let html = '';
+            for (const line of md.split('\n')) {
+                const trimmed = line.trim();
+                if (trimmed.startsWith('## '))      html += `<h2>${trimmed.slice(3)}</h2>`;
+                else if (trimmed.startsWith('- '))   html += `<li>${trimmed.slice(2)}</li>`;
+                else if (trimmed === '# Changelog')  continue;
+                else if (trimmed === '')             continue;
+                else                                 html += `<p>${trimmed}</p>`;
+            }
+            // Wrap consecutive <li> in <ul>
+            html = html.replace(/((?:<li>.*?<\/li>)+)/g, '<ul>$1</ul>');
+            el.innerHTML = html;
+        } catch { /* changelog not available */ }
     }
 
     // ── Mission UI ─────────────────────────────────────────────────────────────────

@@ -109,14 +109,14 @@ const SPAWNS_L1 = [
     { type: 'enemy', kind: 'data_zombie',     x: 4.5,  y: 3.5,  minDifficulty: 0 },
     { type: 'enemy', kind: 'data_zombie',     x: 19.5, y: 3.5,  minDifficulty: 0 },
     { type: 'enemy', kind: 'null_pointer',    x: 9.5,  y: 2.5,  minDifficulty: 1 },
-    { type: 'enemy', kind: 'null_pointer',    x: 14.5, y: 2.5,  minDifficulty: 1 },
+    { type: 'enemy', kind: 'null_pointer',    x: 14.5, y: 2.5,  minDifficulty: 2 },
     // Middle corridor
     { type: 'item',  kind: 'weapon_shotgun',  x: 11.5, y: 9.5 },
     { type: 'item',  kind: 'ammo_shells',     x: 5.5,  y: 10.5 },
     { type: 'item',  kind: 'ammo_shells',     x: 17.5, y: 10.5 },
     { type: 'enemy', kind: 'pipeline_demon',  x: 8.5,  y: 10.5, minDifficulty: 0 },
     { type: 'enemy', kind: 'pipeline_demon',  x: 15.5, y: 10.5, minDifficulty: 0 },
-    { type: 'enemy', kind: 'config_monster',  x: 11.5, y: 12.5, minDifficulty: 1 },
+    { type: 'enemy', kind: 'config_monster',  x: 11.5, y: 12.5, minDifficulty: 2 },
     { type: 'enemy', kind: 'sql_mutant',      x: 6.5,  y: 13.5, minDifficulty: 2 },
     { type: 'enemy', kind: 'sql_mutant',      x: 17.5, y: 13.5, minDifficulty: 2 },
     { type: 'item',  kind: 'health_small',    x: 11.5, y: 15.5 },
@@ -129,13 +129,17 @@ const SPAWNS_L1 = [
     { type: 'enemy', kind: 'config_monster',  x: 5.5,  y: 18.5, minDifficulty: 0 },
     { type: 'enemy', kind: 'config_monster',  x: 18.5, y: 18.5, minDifficulty: 0 },
     { type: 'enemy', kind: 'trigger_boss',    x: 11.5, y: 21.5, minDifficulty: 0 },
-    { type: 'enemy', kind: 'flow_specter',    x: 8.5,  y: 21.5, minDifficulty: 1 },
+    { type: 'enemy', kind: 'flow_specter',    x: 8.5,  y: 21.5, minDifficulty: 2 },
     { type: 'enemy', kind: 'flow_specter',    x: 14.5, y: 21.5, minDifficulty: 1 },
     { type: 'item',  kind: 'weapon_kai',      x: 22.5, y: 20.5 },
     { type: 'item',  kind: 'ammo_rockets',    x: 1.5,  y: 20.5 },
     { type: 'item',  kind: 'weapon_super_shotgun', x: 3.5,  y: 10.5 },
     { type: 'item',  kind: 'weapon_plasma',   x: 1.5,  y: 20.5 },
     { type: 'item',  kind: 'ammo_energy',     x: 19.5, y: 20.5 },
+    { type: 'item',  kind: 'weapon_chaingun', x: 20.5, y: 10.5 },
+    { type: 'item',  kind: 'weapon_chainsaw', x: 11.5, y: 4.5 },
+    { type: 'item',  kind: 'armor',           x: 22.5, y: 12.5 },
+    { type: 'item',  kind: 'armor',           x: 11.5, y: 18.5 },
 ];
 
 // ─── L2: Native Types ─────────────────────────────────────────────────────────
@@ -208,7 +212,7 @@ const SPAWNS_L3 = [
     { type: 'enemy', kind: 'pipeline_demon',  x: 18.5, y: 8.5,  minDifficulty: 0 },
     { type: 'enemy', kind: 'config_monster',  x: 2.5,  y: 11.5, minDifficulty: 0 },
     { type: 'enemy', kind: 'config_monster',  x: 21.5, y: 11.5, minDifficulty: 0 },
-    { type: 'enemy', kind: 'sql_mutant',      x: 11.5, y: 8.5,  minDifficulty: 1 },
+    { type: 'enemy', kind: 'sql_mutant',      x: 11.5, y: 8.5,  minDifficulty: 2 },
     // Lower dimension wings
     { type: 'item',  kind: 'weapon_launcher', x: 5.5,  y: 14.5 },
     { type: 'item',  kind: 'ammo_rockets',    x: 18.5, y: 14.5 },
@@ -228,8 +232,12 @@ const SPAWNS_L3 = [
     { type: 'enemy', kind: 'sql_mutant',      x: 6.5,  y: 19.5, minDifficulty: 0 },
     { type: 'enemy', kind: 'sql_mutant',      x: 17.5, y: 19.5, minDifficulty: 0 },
     { type: 'enemy', kind: 'aggregator_boss', x: 11.5, y: 21.5, minDifficulty: 0 },
-    { type: 'enemy', kind: 'flow_specter',    x: 8.5,  y: 22.5, minDifficulty: 1 },
+    { type: 'enemy', kind: 'flow_specter',    x: 8.5,  y: 22.5, minDifficulty: 2 },
     { type: 'enemy', kind: 'flow_specter',    x: 15.5, y: 22.5, minDifficulty: 1 },
+    { type: 'item',  kind: 'weapon_super_shotgun', x: 11.5, y: 7.5 },
+    { type: 'item',  kind: 'weapon_chainsaw',      x: 1.5,  y: 1.5 },
+    { type: 'item',  kind: 'armor',                x: 5.5,  y: 13.5 },
+    { type: 'item',  kind: 'armor',                x: 18.5, y: 13.5 },
 ];
 
 // ─── L4: Consumption / BI Layer ───────────────────────────────────────────────
