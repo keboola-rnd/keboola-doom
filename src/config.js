@@ -441,13 +441,13 @@ export const L2_COLUMN_DEFS = [
     { name: 'salary',     type: 'FLOAT'   },
     { name: 'created_at', type: 'DATE'    },
 ];
-export const L2_RECORDS_BY_DIFFICULTY = [5, 7, 12];
+export const L2_RECORDS_BY_DIFFICULTY = [3, 7, 12];
 export const L2_RECORD_SPEED    = 0.0009;
-export const L2_SPAWN_INTERVALS = [6000, 4500, 3500];
-export const L2_MAX_CONCURRENT  = [2, 2, 3];
+export const L2_SPAWN_INTERVALS = [8000, 4500, 3500];
+export const L2_MAX_CONCURRENT  = [1, 2, 3];
 // Stakeholder boss difficulty scaling [easy, medium, hard]
-export const L4_BOSS_REGEN_RATE   = [30, 40, 50];
-export const L4_BOSS_REQ_INTERVAL = [6000, 5500, 5000];
-export const L4_BOSS_REQ_DAMAGE   = [12, 15, 18];
+export const L4_BOSS_REGEN_RATE   = [20, 40, 50];
+export const L4_BOSS_REQ_INTERVAL = [8000, 5500, 5000];
+export const L4_BOSS_REQ_DAMAGE   = [8, 15, 18];
 export const L2_COLUMN_HIT_R2   = 0.64;
 export const L2_CAST_HIT_R2     = 0.36;

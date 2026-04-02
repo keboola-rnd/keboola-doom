@@ -165,6 +165,21 @@ export class Player {
         });
     }
 
+    strafe(speed) {
+        const cam = this._camera;
+        const fwd = cam.getForwardRay().direction;
+        // Right vector = perpendicular to forward on XZ plane
+        const dx  = fwd.z * speed;
+        const dz  = -fwd.x * speed;
+        const R   = PLAYER_COLLISION_RADIUS;
+
+        const nx = cam.position.x + dx;
+        const nz = cam.position.z + dz;
+
+        if (this.noclip || !this._wallAt(nx, cam.position.z, R)) cam.position.x = nx;
+        if (this.noclip || !this._wallAt(cam.position.x, nz, R)) cam.position.z = nz;
+    }
+
     // ── Manual rotation ───────────────────────────────────────────────────────
     rotateY(radians) {
         this._camera.rotation.y += radians;

@@ -2303,13 +2303,16 @@ export class EntityManager {
         this._l2MismatchMsg  = '';
         this._l2SpawnList    = [];
 
-        const DAMAGE_MULT = [0.6, 0.85, 1.15];
+        const DAMAGE_MULT = [0.4, 0.85, 1.15];
+        const HP_MULT     = [0.6, 1.0, 1.0];
         const damageMult  = DAMAGE_MULT[difficulty] ?? 1.0;
+        const hpMult      = HP_MULT[difficulty] ?? 1.0;
 
         for (const spawn of level.entitySpawns) {
             if (spawn.type === 'enemy') {
                 if ((spawn.minDifficulty ?? 0) <= difficulty) {
                     const e = new Enemy(spawn.kind, spawn.x, spawn.y, scene, damageMult);
+                    if (hpMult !== 1.0) e.health = Math.round(e.health * hpMult);
                     if (e._abilityCtrl) e._abilityCtrl._em = this;
                     this.enemies.push(e);
                     if (ENEMY_TYPES[spawn.kind]?.isBoss) this._hadBoss = true;
@@ -2334,8 +2337,10 @@ export class EntityManager {
     getMap() { return this._map; }
 
     _spawnEnemy(kind, x, y) {
-        const damageMult = [0.6, 0.85, 1.15][this._difficulty] ?? 1.0;
+        const damageMult = [0.4, 0.85, 1.15][this._difficulty] ?? 1.0;
+        const hpMult     = [0.6, 1.0, 1.0][this._difficulty] ?? 1.0;
         const e = new Enemy(kind, x, y, this._scene, damageMult);
+        if (hpMult !== 1.0) e.health = Math.round(e.health * hpMult);
         if (e._abilityCtrl) { e._abilityCtrl._em = this; }
         this.enemies.push(e);
     }

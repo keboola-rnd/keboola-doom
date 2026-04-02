@@ -598,6 +598,8 @@ class Game {
         if (this._input.isDown('ArrowRight')) this._player.rotateY(+rotAmount);
         if (this._input.isDown('ArrowUp')   || this._input.isDown('KeyW')) this._player.move(+moveAmount);
         if (this._input.isDown('ArrowDown') || this._input.isDown('KeyS')) this._player.move(-moveAmount);
+        if (this._input.isDown('Comma')  || this._input.isDown('KeyA')) this._player.strafe(-moveAmount);
+        if (this._input.isDown('Period') || this._input.isDown('KeyD')) this._player.strafe(+moveAmount);
 
         this._player.update(dt);
         this._entityManager.update(dt, this._player);

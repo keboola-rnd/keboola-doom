@@ -1,5 +1,12 @@
 # Changelog
 
+## v1.3.0 — Easy Mode Overhaul & Strafe Controls
+- Easy mode is now much easier: 40% enemy damage (was 60%), enemies have 60% HP
+- Fewer enemies on Easy: L0 (6 → 4), L1 (7 → 5), L3 (11 → 8)
+- L2 Easy: only 3 records, 8s spawn interval, max 1 concurrent
+- L4 Easy: boss regen 20/s (was 30), req damage 8 (was 12), slower barrages
+- Added strafe controls: comma/period (,/.) or A/D to move left/right
+
 ## v1.2.0 — Difficulty Rebalance
 - Reduced enemy damage on Medium (0.85x) and Hard (1.15x)
 - Fewer enemies on Medium for L1 (12 → 9) and L3 (15 → 13)
